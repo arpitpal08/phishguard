@@ -4,7 +4,11 @@ from wtforms import StringField, SubmitField, TextAreaField, SelectField, Passwo
 from wtforms.validators import DataRequired, URL, Email, Length, EqualTo, ValidationError
 import os
 from datetime import datetime, timedelta
-from model import PhishingDetectionModel
+try:
+    from model import PhishingDetectionModel
+    print("Successfully imported PhishingDetectionModel")
+except Exception as e:
+    print(f"Error importing PhishingDetectionModel: {e}")
 import joblib
 import json
 import re
