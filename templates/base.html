@@ -13,41 +13,117 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Rolling Announcement Bar -->
+    <div class="announcement-bar">
+        <div class="announcement-content">
+            <i class="fas fa-shield-alt me-2"></i>
+            <span class="announcement-text">
+                Phishing is a scam activity! If you suspect you've been scammed, immediately call the National Cyber Crime Helpline at <strong>1930</strong> or visit <a href="https://cybercrime.gov.in" target="_blank">cybercrime.gov.in</a>
+            </span>
+        </div>
+    </div>
+
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
+            <a class="navbar-brand animate__animated animate__fadeIn" href="{{ url_for('index') }}">
                 <i class="fas fa-shield-alt me-2"></i>PhishGuard
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if session.get('user_id') %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                            <i class="fas fa-search me-1"></i>URL Check
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'batch_process_endpoint' %}active{% endif %}" href="{{ url_for('batch_process_endpoint') }}">
+                            <i class="fas fa-th-list me-1"></i>Batch Check
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'network_analyzer' %}active{% endif %}" href="{{ url_for('network_analyzer') }}">
+                            <i class="fas fa-network-wired me-1"></i>Network Analyzer
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'education' %}active{% endif %}" href="{{ url_for('education') }}">
+                            <i class="fas fa-graduation-cap me-1"></i>Education
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}">
+                            <i class="fas fa-info-circle me-1"></i>About
+                        </a>
+                    </li>
+                </ul>
+                
                 <ul class="navbar-nav ms-auto">
+                    {% if session.get('user_id') %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                        <a class="nav-link" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout ({{ session.get('username') }})
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('how_it_works') }}">How It Works</a>
+                        <a class="nav-link {% if request.endpoint == 'register' %}active{% endif %}" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('about') }}">About</a>
-                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
+
+    <!-- Cyber Lock Animation Header -->
+    <div class="cyber-header d-none">
+        <div class="container py-1">
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="cyber-lock me-2">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <div class="matrix-loading">System secure. Phishing detection active.</div>
+            </div>
+        </div>
+    </div>
 
     <!-- Flash Messages -->
     <div class="container mt-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show">
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show animate__animated animate__fadeInDown">
+                        {% if category == 'danger' %}
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% elif category == 'success' %}
+                            <i class="fas fa-check-circle me-2"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle me-2"></i>
+                        {% endif %}
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
@@ -57,18 +133,18 @@
     </div>
 
     <!-- Main Content -->
-    <main>
+    <main class="animate__animated animate__fadeIn animate__faster">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="footer mt-5 py-3 bg-light">
+    <footer class="footer mt-5 py-3">
         <div class="container text-center">
-            <span class="text-muted">© 2025 PhishGuard - AI-Powered Phishing Detection</span>
+            <span class="text-muted">© 2025 ARPIT. All rights reserved. PhishGuard - AI-Powered Phishing Detection</span>
             <div class="mt-2">
-                <a href="#" class="text-secondary me-3"><i class="fab fa-github"></i></a>
-                <a href="#" class="text-secondary me-3"><i class="fab fa-linkedin"></i></a>
-                <a href="#" class="text-secondary"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="me-3"><i class="fab fa-github"></i></a>
+                <a href="#" class="me-3"><i class="fab fa-linkedin"></i></a>
+                <a href="#" class="me-3"><i class="fab fa-twitter"></i></a>
             </div>
         </div>
     </footer>
@@ -77,7 +153,58 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JavaScript -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add active class to current nav item
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+            
+            navLinks.forEach(link => {
+                const linkPath = new URL(link.href).pathname;
+                if (currentPath === linkPath) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Button hover effects
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    this.classList.add('animate__animated', 'animate__pulse', 'animate__faster');
+                });
+                btn.addEventListener('mouseleave', function() {
+                    this.classList.remove('animate__animated', 'animate__pulse', 'animate__faster');
+                });
+            });
+            
+            // Card hover effects
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.12)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.08)';
+                });
+            });
+            
+            // Show cyber header on certain pages
+            if (currentPath.includes('/report') || currentPath.includes('/batch')) {
+                document.querySelector('.cyber-header').classList.remove('d-none');
+            }
+            
+            // Animated progress bars
+            setTimeout(() => {
+                const progressBars = document.querySelectorAll('.progress-bar');
+                progressBars.forEach(bar => {
+                    const value = bar.getAttribute('aria-valuenow');
+                    bar.style.width = value + '%';
+                });
+            }, 200);
+        });
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>

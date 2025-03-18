@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Learn About Phishing Tactics - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <h1 class="display-5 fw-bold text-primary mb-4">Phishing Education Center</h1>
+            
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-lightbulb me-2"></i>
+                <strong>Knowledge Is Your Best Defense:</strong> Understanding how phishing attacks work is the first step in protecting yourself online.
+            </div>
+            
+            <div class="card shadow-lg border-0 mb-5">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0 fs-5"><i class="fas fa-graduation-cap me-2"></i>Types of Phishing Attacks</h3>
+                </div>
+                <div class="card-body p-4">
+                    <p class="lead mb-4">Phishing attacks come in many forms. Learn to recognize the most common types to better protect yourself.</p>
+                    
+                    <div class="accordion" id="phishingTypesAccordion">
+                        {% for type_name, type_info in phishing_types.items() %}
+                        <div class="accordion-item mb-3 border">
+                            <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="collapse{{ loop.index }}">
+                                    <i class="fas fa-fish me-2 text-primary"></i> {{ type_name }}
+                                </button>
+                            </h2>
+                            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#phishingTypesAccordion">
+                                <div class="accordion-body">
+                                    <p><strong>Description:</strong> {{ type_info.description }}</p>
+                                    
+                                    <h5 class="h6 mt-3">Key Indicators:</h5>
+                                    <ul class="mb-3">
+                                        {% for indicator in type_info.indicators %}
+                                        <li>{{ indicator }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    
+                                    <div class="alert alert-warning">
+                                        <strong>Example:</strong> {{ type_info.example }}
+                                    </div>
+                                    
+                                    <h5 class="h6 mt-3">How to Protect Yourself:</h5>
+                                    <p>{{ type_info.prevention }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-5">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3"><i class="fas fa-shield-alt text-primary me-2"></i>General Prevention Tips</h3>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item bg-light"><i class="fas fa-check text-success me-2"></i>Check the URL before clicking or entering information</li>
+                                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Look for HTTPS and the padlock icon in your browser</li>
+                                <li class="list-group-item bg-light"><i class="fas fa-check text-success me-2"></i>Be wary of emails asking for personal information</li>
+                                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Don't click on suspicious links or download unexpected attachments</li>
+                                <li class="list-group-item bg-light"><i class="fas fa-check text-success me-2"></i>Use a password manager to avoid entering credentials on fake sites</li>
+                                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Enable two-factor authentication on all important accounts</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 border-0 shadow">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3"><i class="fas fa-exclamation-triangle text-primary me-2"></i>Red Flags to Watch For</h3>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item bg-light"><i class="fas fa-times text-danger me-2"></i>Urgent requests asking for immediate action</li>
+                                <li class="list-group-item"><i class="fas fa-times text-danger me-2"></i>Poor grammar and spelling errors</li>
+                                <li class="list-group-item bg-light"><i class="fas fa-times text-danger me-2"></i>Generic greetings (e.g., "Dear Customer")</li>
+                                <li class="list-group-item"><i class="fas fa-times text-danger me-2"></i>Suspicious or unusual sender email addresses</li>
+                                <li class="list-group-item bg-light"><i class="fas fa-times text-danger me-2"></i>Requests for personal information or credentials</li>
+                                <li class="list-group-item"><i class="fas fa-times text-danger me-2"></i>Offers that seem too good to be true</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-lg border-0 mb-5">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0 fs-5"><i class="fas fa-tools me-2"></i>Phishing Prevention Tools</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h4 class="h6">Password Managers</h4>
+                            <p class="small">Password managers automatically fill credentials only on legitimate sites, helping you avoid entering information on phishing sites.</p>
+                            <p class="small text-muted">Examples: LastPass, 1Password, Bitwarden, KeePass</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h4 class="h6">Two-Factor Authentication</h4>
+                            <p class="small">2FA adds a second layer of security, making it harder for attackers to access your accounts even if they have your password.</p>
+                            <p class="small text-muted">Examples: Authenticator apps, SMS codes, security keys</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h4 class="h6">Anti-Phishing Browser Extensions</h4>
+                            <p class="small">These extensions can block known phishing sites and warn you about suspicious pages.</p>
+                            <p class="small text-muted">Examples: Web of Trust, Netcraft Extension, PhishDetector</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h4 class="h6">Email Security Services</h4>
+                            <p class="small">Advanced email filtering to catch phishing attempts before they reach your inbox.</p>
+                            <p class="small text-muted">Examples: Microsoft Defender, Google Workspace security</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mb-5">
+                <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search me-2"></i>Check a URL with PhishGuard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

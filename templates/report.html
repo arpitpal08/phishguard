@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+
+{% block title %}Detailed Phishing Analysis Report - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1">
+            <h1 class="display-5 fw-bold text-primary mb-3">Detailed Analysis Report</h1>
+            <p class="text-muted mb-4">Analysis performed on {{ result.check_date }}</p>
+            
+            <div class="d-flex justify-content-between mb-4">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </a>
+                <button class="btn btn-outline-secondary" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>Print Report
+                </button>
+            </div>
+            
+            <div class="card shadow-lg border-0 mb-5 {% if result.is_phishing %}border-danger{% else %}border-success{% endif %}">
+                <div class="card-header {% if result.is_phishing %}bg-danger{% else %}bg-success{% endif %} text-white">
+                    <h3 class="mb-0 fs-5">
+                        {% if result.is_phishing %}
+                            <i class="fas fa-exclamation-triangle me-2"></i>Phishing Detection Alert
+                        {% else %}
+                            <i class="fas fa-check-circle me-2"></i>URL Analysis Results: Likely Safe
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h4 class="h5 mb-3">URL: <a href="#" class="text-break">{{ result.url }}</a></h4>
+                            
+                            <div class="alert {% if result.is_phishing %}alert-danger{% else %}alert-success{% endif %} mb-4">
+                                <i class="fas {% if result.is_phishing %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                                <strong>Analysis Result:</strong> {{ result.message }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5 class="mb-3">Risk Assessment</h5>
+                                    <div class="gauge-container">
+                                        <div class="gauge {% if result.is_phishing %}gauge-danger{% else %}gauge-success{% endif %}" style="--percentage: {{ result.probability * 100 }}%">
+                                            <div class="gauge-value">{{ (result.probability * 100)|round(1) }}%</div>
+                                        </div>
+                                    </div>
+                                    <p class="mb-0 mt-2">
+                                        {% if result.is_phishing %}
+                                            <span class="badge bg-danger">Threat Level: High</span>
+                                        {% elif result.probability > 0.3 %}
+                                            <span class="badge bg-warning text-dark">Threat Level: Medium</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Threat Level: Low</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h5 class="mb-3">URL Analysis</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <tbody>
+                                        {% set parsed_url = result.url|urlparse %}
+                                        <tr>
+                                            <th>Protocol</th>
+                                            <td>{{ parsed_url.scheme }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Domain</th>
+                                            <td>{{ parsed_url.netloc }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Path</th>
+                                            <td>{{ parsed_url.path if parsed_url.path else '/' }}</td>
+                                        </tr>
+                                        {% if parsed_url.query %}
+                                        <tr>
+                                            <th>Query Parameters</th>
+                                            <td>{{ parsed_url.query }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        <tr>
+                                            <th>Domain Age</th>
+                                            <td>
+                                                {% if result.features.domain_age > 5 %}
+                                                    <span class="text-success">Established domain</span>
+                                                {% else %}
+                                                    <span class="text-warning">Recently registered</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Uses HTTPS</th>
+                                            <td>
+                                                {% if result.features.uses_https %}
+                                                    <span class="text-success"><i class="fas fa-check-circle"></i> Yes</span>
+                                                {% else %}
+                                                    <span class="text-danger"><i class="fas fa-times-circle"></i> No</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <h5 class="mb-3">Phishing Indicators</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <th>Phishing Classification</th>
+                                            <td>
+                                                {% if not result.is_phishing %}
+                                                    <span class="badge bg-success">Legitimate</span>
+                                                {% else %}
+                                                    {% set phish_type = result.message|extract_phishing_type %}
+                                                    <span class="badge bg-danger">{{ phish_type }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Suspicious Words</th>
+                                            <td>
+                                                {% if result.features.has_suspicious %}
+                                                    <span class="text-danger"><i class="fas fa-exclamation-circle"></i> Detected</span>
+                                                {% else %}
+                                                    <span class="text-success"><i class="fas fa-check-circle"></i> Not detected</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>URL Shortening</th>
+                                            <td>
+                                                {% if result.features.is_shortened %}
+                                                    <span class="text-danger"><i class="fas fa-exclamation-circle"></i> Detected</span>
+                                                {% else %}
+                                                    <span class="text-success"><i class="fas fa-check-circle"></i> Not detected</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>IP Address in URL</th>
+                                            <td>
+                                                {% if result.features.has_ip %}
+                                                    <span class="text-danger"><i class="fas fa-exclamation-circle"></i> Detected</span>
+                                                {% else %}
+                                                    <span class="text-success"><i class="fas fa-check-circle"></i> Not detected</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Suspicious TLD</th>
+                                            <td>
+                                                {% if result.features.has_suspicious_tld %}
+                                                    <span class="text-danger"><i class="fas fa-exclamation-circle"></i> Detected</span>
+                                                {% else %}
+                                                    <span class="text-success"><i class="fas fa-check-circle"></i> Not detected</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Brand in Subdomain</th>
+                                            <td>
+                                                {% if result.features.brand_in_subdomain %}
+                                                    <span class="text-danger"><i class="fas fa-exclamation-circle"></i> Detected</span>
+                                                {% else %}
+                                                    <span class="text-success"><i class="fas fa-check-circle"></i> Not detected</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <h5 class="mb-3">All Detection Features</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Feature</th>
+                                            <th>Value</th>
+                                            <th>Impact</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for key, value in result.features.items() %}
+                                        <tr>
+                                            <td>{{ key|replace('_', ' ')|title }}</td>
+                                            <td>
+                                                {% if value is sameas true %}
+                                                    <span class="badge {% if key in ['uses_https', 'is_popular_domain'] %}bg-success{% else %}bg-danger{% endif %}">Yes</span>
+                                                {% elif value is sameas false %}
+                                                    <span class="badge {% if key in ['uses_https', 'is_popular_domain'] %}bg-danger{% else %}bg-success{% endif %}">No</span>
+                                                {% else %}
+                                                    {{ value }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if key in ['has_suspicious', 'is_shortened', 'has_ip', 'has_suspicious_tld', 'brand_in_subdomain', 'has_redirection', 'has_at_symbol', 'domain_is_numeric'] %}
+                                                    {% if value is sameas true %}
+                                                        <i class="fas fa-arrow-up text-danger"></i> High Risk
+                                                    {% else %}
+                                                        <i class="fas fa-arrow-down text-success"></i> Low Risk
+                                                    {% endif %}
+                                                {% elif key in ['uses_https', 'is_popular_domain'] %}
+                                                    {% if value is sameas true %}
+                                                        <i class="fas fa-arrow-down text-success"></i> Low Risk
+                                                    {% else %}
+                                                        <i class="fas fa-arrow-up text-danger"></i> High Risk
+                                                    {% endif %}
+                                                {% elif key == 'special_char_count' and value > 2 %}
+                                                    <i class="fas fa-arrow-up text-danger"></i> High Risk
+                                                {% elif key == 'subdomain_count' and value > 2 %}
+                                                    <i class="fas fa-arrow-up text-danger"></i> High Risk
+                                                {% elif key == 'url_length' and value > 100 %}
+                                                    <i class="fas fa-arrow-up text-danger"></i> High Risk
+                                                {% else %}
+                                                    <i class="fas fa-minus text-secondary"></i> Neutral
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if result.is_phishing and phishing_types %}
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <h5 class="mb-3">How to Protect Yourself</h5>
+                            {% set phish_type = result.message|extract_phishing_type %}
+                            {% for type_name, type_info in phishing_types.items() %}
+                                {% if type_name.lower() in phish_type.lower() %}
+                                    <div class="alert alert-warning">
+                                        <h6 class="alert-heading">{{ type_name }}</h6>
+                                        <p>{{ type_info.description }}</p>
+                                        <hr>
+                                        <p class="mb-0"><strong>How to stay safe:</strong> {{ type_info.prevention }}</p>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                </div>
+                <div class="card-footer {% if result.is_phishing %}bg-danger bg-opacity-10{% else %}bg-success bg-opacity-10{% endif %} p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small>Report ID: {{ result.id }}</small>
+                        <div>
+                            <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary me-2">
+                                Check Another URL
+                            </a>
+                            <a href="{{ url_for('education') }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-graduation-cap me-1"></i>Learn More
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gauge-container {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        position: relative;
+    }
+    
+    .gauge {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(
+            var(--gauge-color) 0% var(--percentage, 0%),
+            #e9ecef var(--percentage, 0%) 100%
+        );
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .gauge::before {
+        content: '';
+        position: absolute;
+        width: 70%;
+        height: 70%;
+        background: white;
+        border-radius: 50%;
+    }
+    
+    .gauge-value {
+        position: relative;
+        font-size: 24px;
+        font-weight: bold;
+        z-index: 1;
+    }
+    
+    .gauge-success {
+        --gauge-color: #28a745;
+    }
+    
+    .gauge-danger {
+        --gauge-color: #dc3545;
+    }
+    
+    .gauge-warning {
+        --gauge-color: #ffc107;
+    }
+    
+    @media print {
+        .btn, .no-print {
+            display: none !important;
+        }
+        
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+        }
+        
+        .card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+        }
+        
+        .card-header {
+            color: black !important;
+            background-color: #f8f9fa !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Custom Jinja filter to extract phishing type from message
+    function extractPhishingType(message) {
+        const match = message.match(/\(([^)]+)\)/);
+        return match ? match[1] : "Generic phishing";
+    }
+</script>
+{% endblock %} 

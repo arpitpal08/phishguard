@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Security Scan Report - {{ scan.target }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .logo {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        h1 {
+            font-size: 24px;
+            margin: 0 0 5px 0;
+            color: #1a73e8;
+        }
+        h2 {
+            font-size: 18px;
+            margin: 20px 0 10px 0;
+            color: #1a73e8;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        h3 {
+            font-size: 14px;
+            margin: 15px 0 5px 0;
+            color: #444;
+        }
+        .meta-info {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            margin-bottom: 10px;
+            flex: 1 0 30%;
+        }
+        .meta-label {
+            font-weight: bold;
+            margin-right: 5px;
+            color: #666;
+        }
+        .risk-gauge {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .gauge-label {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .gauge-container {
+            position: relative;
+            height: 30px;
+            background-color: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        .gauge-fill {
+            height: 100%;
+            border-radius: 15px;
+        }
+        .low {
+            background-color: #28a745;
+        }
+        .medium {
+            background-color: #ffc107;
+        }
+        .high {
+            background-color: #dc3545;
+        }
+        .gauge-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        .gauge-legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .severity {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+        .critical {
+            background-color: #5a1e1e;
+        }
+        .high {
+            background-color: #dc3545;
+        }
+        .medium {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .low {
+            background-color: #28a745;
+        }
+        .info {
+            background-color: #17a2b8;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .subsection {
+            margin-left: 15px;
+            margin-bottom: 15px;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .info-box {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Security Scan Report</h1>
+            <p>Comprehensive analysis and security assessment</p>
+        </div>
+        
+        <div class="meta-info">
+            <div class="meta-item">
+                <span class="meta-label">Target:</span>
+                <span>{{ scan.target }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Scan Type:</span>
+                <span>{{ scan.scan_type|title }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Scan Date:</span>
+                <span>{{ scan.created_at }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Report ID:</span>
+                <span>{{ scan.id }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Generated:</span>
+                <span>{{ now }}</span>
+            </div>
+        </div>
+        
+        <div class="risk-gauge">
+            <div class="gauge-label">Overall Risk Assessment</div>
+            {% set risk_score = result.risk_score|default(0) %}
+            <div class="gauge-container">
+                <div class="gauge-fill {% if risk_score > 70 %}high{% elif risk_score > 40 %}medium{% else %}low{% endif %}" style="width: {{ risk_score }}%;">
+                    <span class="gauge-value">{{ risk_score }}%</span>
+                </div>
+            </div>
+            <div class="gauge-legend">
+                <span>Low Risk (0-40%)</span>
+                <span>Medium Risk (41-70%)</span>
+                <span>High Risk (71-100%)</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Executive Summary</h2>
+            <p>This report provides a detailed security assessment of {{ scan.target }} based on a {{ scan.scan_type|title }} scan performed on {{ scan.created_at }}.</p>
+            
+            {% if risk_score > 70 %}
+            <div class="warning-box">
+                <h3 style="margin-top: 0;">High Risk Assessment</h3>
+                <p>This target has significant security vulnerabilities that should be addressed immediately. These issues make the target susceptible to exploitation and potential compromise.</p>
+            </div>
+            {% elif risk_score > 40 %}
+            <div class="warning-box">
+                <h3 style="margin-top: 0;">Medium Risk Assessment</h3>
+                <p>This target has some security concerns that should be addressed. While not immediately critical, these issues could lead to security vulnerabilities if left unresolved.</p>
+            </div>
+            {% else %}
+            <div class="info-box">
+                <h3 style="margin-top: 0;">Low Risk Assessment</h3>
+                <p>This target has good security posture with few or minor issues identified. Continue to maintain best practices and monitor for new vulnerabilities.</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if result.findings.basic %}
+        <div class="section">
+            <h2>Basic Information</h2>
+            
+            {% if result.findings.basic.dns %}
+            <div class="subsection">
+                <h3>DNS Information</h3>
+                <table>
+                    <tr>
+                        <th>Record Type</th>
+                        <th>Value</th>
+                    </tr>
+                    {% if result.findings.basic.dns.a_records %}
+                    <tr>
+                        <td>A Records</td>
+                        <td>
+                            {% for record in result.findings.basic.dns.a_records %}
+                            <div>{{ record }}</div>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.basic.dns.mx_records %}
+                    <tr>
+                        <td>MX Records</td>
+                        <td>
+                            {% for record in result.findings.basic.dns.mx_records %}
+                            <div>{{ record }}</div>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.basic.dns.ns_records %}
+                    <tr>
+                        <td>NS Records</td>
+                        <td>
+                            {% for record in result.findings.basic.dns.ns_records %}
+                            <div>{{ record }}</div>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.basic.dns.txt_records %}
+                    <tr>
+                        <td>TXT Records</td>
+                        <td>
+                            {% for record in result.findings.basic.dns.txt_records %}
+                            <div>{{ record }}</div>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td>SPF Record</td>
+                        <td>{{ "Present" if result.findings.basic.dns.has_spf else "Not Present" }}</td>
+                    </tr>
+                    <tr>
+                        <td>DMARC Record</td>
+                        <td>{{ "Present" if result.findings.basic.dns.has_dmarc else "Not Present" }}</td>
+                    </tr>
+                </table>
+            </div>
+            {% endif %}
+            
+            {% if result.findings.basic.whois %}
+            <div class="subsection">
+                <h3>WHOIS Information</h3>
+                <table>
+                    <tr>
+                        <th>Field</th>
+                        <th>Value</th>
+                    </tr>
+                    {% if result.findings.basic.whois.registrar %}
+                    <tr>
+                        <td>Registrar</td>
+                        <td>{{ result.findings.basic.whois.registrar }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.basic.whois.creation_date %}
+                    <tr>
+                        <td>Creation Date</td>
+                        <td>{{ result.findings.basic.whois.creation_date }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.basic.whois.expiration_date %}
+                    <tr>
+                        <td>Expiration Date</td>
+                        <td>{{ result.findings.basic.whois.expiration_date }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.basic.whois.updated_date %}
+                    <tr>
+                        <td>Updated Date</td>
+                        <td>{{ result.findings.basic.whois.updated_date }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.basic.whois.domain_age_days is defined %}
+                    <tr>
+                        <td>Domain Age</td>
+                        <td>{{ result.findings.basic.whois.domain_age_days }} days</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if result.findings.ports %}
+        <div class="section">
+            <h2>Port Scan Results</h2>
+            <p>Total ports scanned: {{ result.findings.ports.summary.total_scanned }}</p>
+            <p>Open ports: {{ result.findings.ports.summary.total_open }}</p>
+            
+            {% if result.findings.ports.open_ports %}
+            <div class="subsection">
+                <h3>Open Ports</h3>
+                <table>
+                    <tr>
+                        <th>Port</th>
+                        <th>Service</th>
+                    </tr>
+                    {% for port in result.findings.ports.open_ports %}
+                    <tr>
+                        <td>{{ port.port }}</td>
+                        <td>{{ port.service }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if result.findings.ssl %}
+        <div class="section">
+            <h2>SSL Certificate Analysis</h2>
+            
+            {% if not result.findings.ssl.error %}
+            <div class="subsection">
+                <h3>Certificate Details</h3>
+                <table>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>Valid</td>
+                        <td>{{ "Yes" if result.findings.ssl.is_valid else "No" }}</td>
+                    </tr>
+                    {% if result.findings.ssl.days_until_expiry is defined %}
+                    <tr>
+                        <td>Days Until Expiry</td>
+                        <td>{{ result.findings.ssl.days_until_expiry }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.ssl.subject %}
+                    <tr>
+                        <td>Subject</td>
+                        <td>
+                            {% for key, value in result.findings.ssl.subject.items() %}
+                            <div><strong>{{ key }}:</strong> {{ value }}</div>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.ssl.issuer %}
+                    <tr>
+                        <td>Issuer</td>
+                        <td>
+                            {% for key, value in result.findings.ssl.issuer.items() %}
+                            <div><strong>{{ key }}:</strong> {{ value }}</div>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.ssl.signature_algorithm %}
+                    <tr>
+                        <td>Signature Algorithm</td>
+                        <td>{{ result.findings.ssl.signature_algorithm }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if result.findings.ssl.alternative_names %}
+                    <tr>
+                        <td>Alternative Names</td>
+                        <td>
+                            {% for name in result.findings.ssl.alternative_names %}
+                            <div>{{ name }}</div>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            {% else %}
+            <p>Error analyzing SSL certificate: {{ result.findings.ssl.error }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if result.findings.headers %}
+        <div class="section">
+            <h2>HTTP Headers Analysis</h2>
+            
+            {% if not result.findings.headers.error %}
+            <div class="subsection">
+                <h3>Security Headers</h3>
+                <table>
+                    <tr>
+                        <th>Header</th>
+                        <th>Status</th>
+                    </tr>
+                    {% for header, present in result.findings.headers.security_headers.items() %}
+                    <tr>
+                        <td>{{ header }}</td>
+                        <td>{{ "Present" if present else "Missing" }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                
+                <p>Security headers present: {{ result.findings.headers.security_headers_present }} of {{ result.findings.headers.security_headers_present + result.findings.headers.security_headers_missing }}</p>
+            </div>
+            
+            {% if result.findings.headers.cookies %}
+            <div class="subsection">
+                <h3>Cookie Security</h3>
+                <table>
+                    <tr>
+                        <th>Cookie Name</th>
+                        <th>Secure</th>
+                        <th>HttpOnly</th>
+                        <th>SameSite</th>
+                    </tr>
+                    {% for cookie in result.findings.headers.cookies %}
+                    <tr>
+                        <td>{{ cookie.name }}</td>
+                        <td>{{ "Yes" if cookie.secure else "No" }}</td>
+                        <td>{{ "Yes" if cookie.httponly else "No" }}</td>
+                        <td>{{ "Yes" if cookie.samesite else "No" }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% endif %}
+            
+            {% if result.findings.headers.server_disclosure %}
+            <div class="subsection">
+                <h3>Server Information</h3>
+                <p>Server information is disclosed: {{ result.findings.headers.server_info }}</p>
+                <p>Note: Disclosing server information can help attackers identify vulnerable software versions.</p>
+            </div>
+            {% endif %}
+            {% else %}
+            <p>Error analyzing HTTP headers: {{ result.findings.headers.error }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if result.recommendations %}
+        <div class="section">
+            <h2>Security Recommendations</h2>
+            
+            <table>
+                <tr>
+                    <th>Issue</th>
+                    <th>Severity</th>
+                    <th>Recommendation</th>
+                </tr>
+                {% for recommendation in result.recommendations %}
+                <tr>
+                    <td>{{ recommendation.title }}</td>
+                    <td><span class="severity {{ recommendation.severity }}">{{ recommendation.severity }}</span></td>
+                    <td>
+                        <p>{{ recommendation.description }}</p>
+                        <strong>Implementation:</strong> {{ recommendation.implementation }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endif %}
+        
+        <div class="footer">
+            <p>This report was generated by PhishGuard Security Scanner on {{ scan.created_at }}.</p>
+            <p>© {{ now.year }} PhishGuard - All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html> 

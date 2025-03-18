@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Batch URL Checking - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <h1 class="mb-3"><i class="fas fa-tasks me-2 text-secondary"></i>Batch URL Checking</h1>
+            <p class="lead">Check multiple URLs at once for phishing threats</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <i class="fas fa-upload"></i>Upload URLs
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('batch_process_endpoint') }}">
+                        <div class="mb-3">
+                            <label for="urls_file" class="form-label">Upload a file with URLs (one per line)</label>
+                            <input type="file" class="form-control" id="urls_file" name="urls_file" accept=".txt,.csv" required>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>Accepted formats: .txt, .csv (one URL per line)
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Options</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="save_results" name="save_results" checked>
+                                <label class="form-check-label" for="save_results">
+                                    Save results to history
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="generate_report" name="generate_report" checked>
+                                <label class="form-check-label" for="generate_report">
+                                    Generate detailed report for each URL
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="process-btn">
+                                <i class="fas fa-bolt me-2"></i>Process URLs
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i>How It Works
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                            <div class="p-3">
+                                <span class="d-inline-block bg-light rounded-circle p-3 mb-3">
+                                    <i class="fas fa-upload fs-3 text-primary"></i>
+                                </span>
+                                <h5>Upload</h5>
+                                <p class="text-muted">Upload a file containing URLs (one per line)</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                            <div class="p-3">
+                                <span class="d-inline-block bg-light rounded-circle p-3 mb-3">
+                                    <i class="fas fa-cogs fs-3 text-primary"></i>
+                                </span>
+                                <h5>Process</h5>
+                                <p class="text-muted">Our AI analyzes each URL for phishing indicators</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="p-3">
+                                <span class="d-inline-block bg-light rounded-circle p-3 mb-3">
+                                    <i class="fas fa-file-alt fs-3 text-primary"></i>
+                                </span>
+                                <h5>Results</h5>
+                                <p class="text-muted">Review detailed results and download the report</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if results %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-chart-bar"></i>Results
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" id="download-csv">
+                        <i class="fas fa-download me-1"></i>Download CSV
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>URL</th>
+                                    <th>Risk Score</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 250px;" title="{{ result.url }}">
+                                            {{ result.url }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <!-- Progress bar with Jinja2 template logic -->
+                                        {% set progress_bar_class = "" %}
+                                        {% if result.prediction > 0.6 %}
+                                            {% set progress_bar_class = "progress-bar bg-danger" %}
+                                        {% elif result.prediction > 0.4 %}
+                                            {% set progress_bar_class = "progress-bar bg-warning" %}
+                                        {% else %}
+                                            {% set progress_bar_class = "progress-bar bg-success" %}
+                                        {% endif %}
+                                        
+                                        {% set bar_width = result.prediction * 100 %}
+                                        
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                <!-- Jinja2 template: progress bar div -->
+                                                <div class="{{ progress_bar_class }}" role="progressbar" style="width: {{ bar_width }}%;" aria-valuenow="{{ bar_width }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <span>{{ (bar_width)|int }}%</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="risk-badge {% if result.prediction > 0.6 %}risk-badge-high{% elif result.prediction > 0.4 %}risk-badge-medium{% else %}risk-badge-low{% endif %}">
+                                            {% if result.prediction > 0.6 %}
+                                                High Risk
+                                            {% elif result.prediction > 0.4 %}
+                                                Medium Risk
+                                            {% else %}
+                                                Low Risk
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('detailed_report', check_id=result.check_id) }}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-file-alt"></i> Report
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <span class="feature-indicator feature-high"></span>
+                                </div>
+                                <div>
+                                    <span class="fw-bold">High Risk:</span> 
+                                    {{ results|selectattr('prediction', '>', 0.6)|list|length }} URLs
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <span class="feature-indicator feature-medium"></span>
+                                </div>
+                                <div>
+                                    <span class="fw-bold">Medium Risk:</span> 
+                                    {{ results|selectattr('prediction', '>', 0.4)|selectattr('prediction', '<=', 0.6)|list|length }} URLs
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <span class="feature-indicator feature-low"></span>
+                                </div>
+                                <div>
+                                    <span class="fw-bold">Low Risk:</span> 
+                                    {{ results|selectattr('prediction', '<=', 0.4)|list|length }} URLs
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form submission animation
+        const form = document.querySelector('form');
+        const processBtn = document.getElementById('process-btn');
+        
+        if (form) {
+            form.addEventListener('submit', function() {
+                processBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                processBtn.disabled = true;
+            });
+        }
+        
+        // CSV Download functionality
+        const downloadBtn = document.getElementById('download-csv');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function() {
+                const table = document.querySelector('table');
+                if (!table) return;
+                
+                let csv = [];
+                const rows = table.querySelectorAll('tr');
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const row = [], cols = rows[i].querySelectorAll('td, th');
+                    
+                    for (let j = 0; j < cols.length - 1; j++) { // Skip the Actions column
+                        let text = cols[j].innerText.replace(/"/g, '""');
+                        row.push('"' + text + '"');
+                    }
+                    
+                    csv.push(row.join(','));
+                }
+                
+                const csvFile = new Blob([csv.join('\n')], {type: 'text/csv'});
+                const downloadLink = document.createElement('a');
+                downloadLink.download = 'phishing_scan_results.csv';
+                downloadLink.href = window.URL.createObjectURL(csvFile);
+                downloadLink.style.display = 'none';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            });
+        }
+    });
+</script>
+{% endblock %} 

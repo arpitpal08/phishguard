@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Security Scan - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Schedule Scan</li>
+                </ol>
+            </nav>
+            <h1 class="mb-0"><i class="fas fa-calendar-alt me-2 text-primary"></i>Schedule Security Scan</h1>
+            <p class="lead text-muted">Set up automated security scans to monitor your targets regularly</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Create Scheduled Scan</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('schedule_scan') }}">
+                        {{ form.csrf_token }}
+                        
+                        <div class="mb-3">
+                            <label for="target" class="form-label">Target (Domain, IP, or URL)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                                <input type="text" class="form-control" id="target" name="target" placeholder="example.com or 192.168.1.1" required>
+                            </div>
+                            <div class="form-text">Enter a domain name, IP address, or URL to scan.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="scan_type" class="form-label">Scan Type</label>
+                            <select class="form-select" id="scan_type" name="scan_type" required>
+                                {% for value, label in form.scan_type.choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="frequency" class="form-label">Frequency</label>
+                            <select class="form-select" id="frequency" name="frequency" required>
+                                {% for value, label in frequencies %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">How often the scan should be performed.</div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-info-circle fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5 class="alert-heading">About Scheduled Scans</h5>
+                                    <p class="mb-0">Scheduled scans run automatically in the background at the specified frequency. Results will be saved to your scan history and visible in your dashboard.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-calendar-check me-1"></i>Schedule Scan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2 text-warning"></i>Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <span class="badge rounded-pill bg-info p-2">
+                                        <i class="fas fa-server fa-lg"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6>Public-Facing Servers</h6>
+                                    <p class="text-muted small mb-0">Daily basic scans for web servers exposed to the internet</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <span class="badge rounded-pill bg-primary p-2">
+                                        <i class="fas fa-lock fa-lg"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6>SSL Certificates</h6>
+                                    <p class="text-muted small mb-0">Weekly SSL scans to monitor certificate expiration</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <span class="badge rounded-pill bg-warning p-2 text-dark">
+                                        <i class="fas fa-network-wired fa-lg"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6>Critical Infrastructure</h6>
+                                    <p class="text-muted small mb-0">Weekly port scans for critical network infrastructure</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <span class="badge rounded-pill bg-success p-2">
+                                        <i class="fas fa-shield-alt fa-lg"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6>Security Compliance</h6>
+                                    <p class="text-muted small mb-0">Monthly full security analysis for compliance purposes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Custom scan type suggestions based on target
+    const targetInput = document.getElementById('target');
+    const scanTypeSelect = document.getElementById('scan_type');
+    
+    targetInput.addEventListener('blur', function() {
+        const target = targetInput.value.trim();
+        
+        // IP address pattern
+        const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+        
+        if (ipPattern.test(target)) {
+            // For IP addresses, recommend port scanning
+            for (let i = 0; i < scanTypeSelect.options.length; i++) {
+                if (scanTypeSelect.options[i].value === 'ports') {
+                    scanTypeSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        } else if (target.includes('.')) {
+            // For domains, recommend full scan
+            for (let i = 0; i < scanTypeSelect.options.length; i++) {
+                if (scanTypeSelect.options[i].value === 'full') {
+                    scanTypeSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

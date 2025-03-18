@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Register - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <h1 class="mb-3"><i class="fas fa-user-plus me-2 text-secondary"></i>Create an Account</h1>
+            <p class="lead">Join PhishGuard to access advanced security features</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 offset-lg-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <i class="fas fa-user-shield me-2"></i>Register
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('register') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">{{ form.username.label }}</label>
+                            {{ form.username(class="form-control", placeholder="Enter a username between 4-20 characters") }}
+                            {% if form.username.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.username.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ form.email.label }}</label>
+                            {{ form.email(class="form-control", placeholder="Enter your email address") }}
+                            {% if form.email.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.email.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ form.password.label }}</label>
+                            {{ form.password(class="form-control", placeholder="Choose a strong password") }}
+                            {% if form.password.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.password.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text password-strength">
+                                <small>Password must be at least 8 characters</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="confirm_password" class="form-label">{{ form.confirm_password.label }}</label>
+                            {{ form.confirm_password(class="form-control", placeholder="Confirm your password") }}
+                            {% if form.confirm_password.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.confirm_password.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-md-12 text-center">
+            <div class="benefits-section">
+                <h3 class="mb-4">Benefits of Registration</h3>
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="benefit-item p-3">
+                            <i class="fas fa-history fs-2 mb-3 text-primary"></i>
+                            <h5>Scan History</h5>
+                            <p>Save and access your security scan history anytime</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="benefit-item p-3">
+                            <i class="fas fa-file-alt fs-2 mb-3 text-primary"></i>
+                            <h5>Detailed Reports</h5>
+                            <p>Access comprehensive security reports with recommendations</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="benefit-item p-3">
+                            <i class="fas fa-shield-alt fs-2 mb-3 text-primary"></i>
+                            <h5>Network Security Analysis</h5>
+                            <p>Perform advanced network security analysis on domains and IPs</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordField = document.getElementById('password');
+        const strengthIndicator = document.querySelector('.password-strength');
+        
+        passwordField.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            let message = '';
+            
+            if (password.length < 8) {
+                message = '<i class="fas fa-times-circle text-danger"></i> Password must be at least 8 characters';
+            } else {
+                strength += 1;
+                
+                if (/[A-Z]/.test(password)) strength += 1;
+                if (/[0-9]/.test(password)) strength += 1;
+                if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+                
+                if (strength == 1) {
+                    message = '<i class="fas fa-exclamation-circle text-danger"></i> Weak password';
+                } else if (strength == 2) {
+                    message = '<i class="fas fa-info-circle text-warning"></i> Medium strength password';
+                } else if (strength == 3) {
+                    message = '<i class="fas fa-check-circle text-success"></i> Strong password';
+                } else {
+                    message = '<i class="fas fa-shield-alt text-success"></i> Very strong password';
+                }
+            }
+            
+            strengthIndicator.innerHTML = '<small>' + message + '</small>';
+        });
+    });
+</script>
+{% endblock %} 

@@ -49,8 +49,7 @@
                                     </td>
                                     <td>
                                         <div class="progress" style="height: 6px; width: 100px;">
-                                            <div class="progress-bar {% if result.is_phishing %}bg-danger{% else %}bg-success{% endif %}" 
-                                                 role="progressbar" style="width: {{ (result.probability * 100)|round(1) }}%"></div>
+                                            <div class="progress-bar {% if result.is_phishing %}bg-danger{% else %}bg-success{% endif %} {{ result.width_class }}" role="progressbar"></div>
                                         </div>
                                         <small>{{ (result.probability * 100)|round(1) }}%</small>
                                     </td>

@@ -1,0 +1,766 @@
+{% extends "base.html" %}
+
+{% block title %}Network Security Analyzer - PhishGuard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <h1 class="mb-3"><i class="fas fa-network-wired me-2 text-secondary"></i>Network Security Analyzer</h1>
+            <p class="lead">Analyze domains, IPs, and websites for security vulnerabilities</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <i class="fas fa-search"></i> Security Analysis
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('network_analyzer') }}">
+                        {{ form.csrf_token }}
+                        
+                        <div class="mb-3">
+                            <label for="target" class="form-label">{{ form.target.label }}</label>
+                            <input type="text" class="form-control" id="target" name="target" value="{{ form.target.data or request.args.get('target', '') }}" placeholder="e.g., example.com, 93.184.216.34, https://example.com">
+                            {% if form.target.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.target.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>Enter a domain name, IP address, or complete URL
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="scan_type" class="form-label">{{ form.scan_type.label }}</label>
+                            <select class="form-control" id="scan_type" name="scan_type">
+                                {% for choice in form.scan_type.choices %}
+                                <option value="{{ choice[0] }}" {% if choice[0] == form.scan_type.data %}selected{% endif %}>{{ choice[1] }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>Choose the type of security analysis to perform
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="scan-btn">Start Scan</button>
+                        </div>
+                    </form>
+
+                    <!-- Add loading indicator overlay -->
+                    <div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+                        <div class="bg-white p-4 rounded shadow-sm text-center">
+                            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <h5 id="scan-status">Scanning target...</h5>
+                            <div class="progress mt-2" style="width: 250px;">
+                                <div id="scan-progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <p id="scan-detail" class="mt-2 small text-muted">Initializing scan...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i> Types of Analysis
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="scanTypesAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="basicHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#basicCollapse" aria-expanded="false" aria-controls="basicCollapse">
+                                    <i class="fas fa-info-circle me-2 text-primary"></i>Basic Scan
+                                </button>
+                            </h2>
+                            <div id="basicCollapse" class="accordion-collapse collapse" aria-labelledby="basicHeading" data-bs-parent="#scanTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Performs DNS lookups and WHOIS queries to gather basic information about the domain.</p>
+                                    <p class="mb-0"><strong>Includes:</strong> A records, MX records, NS records, TXT records, SPF/DMARC checks, domain registration information, and domain age.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="portsHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#portsCollapse" aria-expanded="false" aria-controls="portsCollapse">
+                                    <i class="fas fa-network-wired me-2 text-warning"></i>Port Scan
+                                </button>
+                            </h2>
+                            <div id="portsCollapse" class="accordion-collapse collapse" aria-labelledby="portsHeading" data-bs-parent="#scanTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Scans common ports to identify open services on the target.</p>
+                                    <p class="mb-0"><strong>Includes:</strong> Scanning common ports (21, 22, 23, 25, 53, 80, 443, etc.) to identify open services that could pose security risks if misconfigured.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="sslHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sslCollapse" aria-expanded="false" aria-controls="sslCollapse">
+                                    <i class="fas fa-lock me-2 text-success"></i>SSL Certificate Analysis
+                                </button>
+                            </h2>
+                            <div id="sslCollapse" class="accordion-collapse collapse" aria-labelledby="sslHeading" data-bs-parent="#scanTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Analyzes the SSL/TLS certificate for security issues.</p>
+                                    <p class="mb-0"><strong>Includes:</strong> Certificate validity, expiration date, issuer information, signature algorithm, and common name verification.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headersHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#headersCollapse" aria-expanded="false" aria-controls="headersCollapse">
+                                    <i class="fas fa-code me-2 text-info"></i>HTTP Headers Analysis
+                                </button>
+                            </h2>
+                            <div id="headersCollapse" class="accordion-collapse collapse" aria-labelledby="headersHeading" data-bs-parent="#scanTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Analyzes HTTP security headers and cookie security.</p>
+                                    <p class="mb-0"><strong>Includes:</strong> Security headers check (HSTS, CSP, X-Frame-Options, etc.), server information disclosure, and cookie security attributes.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="fullHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fullCollapse" aria-expanded="false" aria-controls="fullCollapse">
+                                    <i class="fas fa-shield-alt me-2 text-danger"></i>Full Security Analysis
+                                </button>
+                            </h2>
+                            <div id="fullCollapse" class="accordion-collapse collapse" aria-labelledby="fullHeading" data-bs-parent="#scanTypesAccordion">
+                                <div class="accordion-body">
+                                    <p>Performs all available security scans in one comprehensive analysis.</p>
+                                    <p class="mb-0"><strong>Includes:</strong> All the above scans combined for a complete security assessment with risk score and recommendations.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if result %}
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <div class="card shadow-sm result-card">
+                <div class="card-header d-flex justify-content-between align-items-center {% if result.risk_score > 70 %}bg-danger text-white{% elif result.risk_score > 40 %}bg-warning{% else %}bg-success text-white{% endif %}">
+                    <div>
+                        {% if result.risk_score > 70 %}
+                            <i class="fas fa-exclamation-triangle me-2"></i>High Risk
+                        {% elif result.risk_score > 40 %}
+                            <i class="fas fa-exclamation-circle me-2"></i>Medium Risk
+                        {% else %}
+                            <i class="fas fa-check-circle me-2"></i>Low Risk
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-light" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
+                        {% if session.get('user_id') %}
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-light ms-2">
+                                <i class="fas fa-history me-1"></i>View History
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h4 class="mb-3"><i class="fas fa-globe me-2 text-primary"></i>Target Information</h4>
+                            <table class="table">
+                                <tr>
+                                    <th>Target:</th>
+                                    <td>{{ result.target }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Scan Type:</th>
+                                    <td>{{ result.scan_type|capitalize }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Timestamp:</th>
+                                    <td>{{ result.timestamp }}</td>
+                                </tr>
+                                {% if result.findings.basic and result.findings.basic.ip %}
+                                <tr>
+                                    <th>IP Address:</th>
+                                    <td>{{ result.findings.basic.ip }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h4 class="mb-3"><i class="fas fa-chart-pie me-2 text-primary"></i>Risk Assessment</h4>
+                            <div class="text-center">
+                                <div class="cyber-gauge {% if result.risk_score > 70 %}cyber-gauge-high{% elif result.risk_score > 40 %}cyber-gauge-medium{% else %}cyber-gauge-low{% endif %}">
+                                    {{ result.risk_score }}%
+                                </div>
+                                <p class="mt-2">
+                                    {% if result.risk_score > 70 %}
+                                        High security risk level
+                                    {% elif result.risk_score > 40 %}
+                                        Medium security risk level
+                                    {% else %}
+                                        Low security risk level
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="findings-sections">
+                                <!-- Basic Findings -->
+                                {% if result.findings.basic %}
+                                <div class="findings-section mb-4">
+                                    <h4><i class="fas fa-info-circle me-2 text-primary"></i>Basic Information</h4>
+                                    
+                                    <!-- DNS Records -->
+                                    {% if result.findings.basic.dns %}
+                                    <div class="mb-3">
+                                        <h5 class="mb-2">DNS Records</h5>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                {% if result.findings.basic.dns.a_records %}
+                                                <h6>A Records</h6>
+                                                <ul class="list-group mb-3">
+                                                    {% for record in result.findings.basic.dns.a_records %}
+                                                    <li class="list-group-item">{{ record }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                                {% endif %}
+                                                
+                                                {% if result.findings.basic.dns.mx_records %}
+                                                <h6>MX Records</h6>
+                                                <ul class="list-group mb-3">
+                                                    {% for record in result.findings.basic.dns.mx_records %}
+                                                    <li class="list-group-item">{{ record }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                                {% endif %}
+                                                
+                                                {% if result.findings.basic.dns.ns_records %}
+                                                <h6>NS Records</h6>
+                                                <ul class="list-group mb-3">
+                                                    {% for record in result.findings.basic.dns.ns_records %}
+                                                    <li class="list-group-item">{{ record }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                                {% endif %}
+                                                
+                                                {% if result.findings.basic.dns.txt_records %}
+                                                <h6>TXT Records</h6>
+                                                <ul class="list-group mb-3">
+                                                    {% for record in result.findings.basic.dns.txt_records %}
+                                                    <li class="list-group-item"><code>{{ record }}</code></li>
+                                                    {% endfor %}
+                                                </ul>
+                                                {% endif %}
+                                                
+                                                <h6>Email Security</h6>
+                                                <div class="d-flex mb-2">
+                                                    <div class="me-3">
+                                                        <span class="badge {% if result.findings.basic.dns.has_spf %}bg-success{% else %}bg-danger{% endif %} p-2">
+                                                            {% if result.findings.basic.dns.has_spf %}
+                                                            <i class="fas fa-check me-1"></i>SPF
+                                                            {% else %}
+                                                            <i class="fas fa-times me-1"></i>No SPF
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="badge {% if result.findings.basic.dns.has_dmarc %}bg-success{% else %}bg-danger{% endif %} p-2">
+                                                            {% if result.findings.basic.dns.has_dmarc %}
+                                                            <i class="fas fa-check me-1"></i>DMARC
+                                                            {% else %}
+                                                            <i class="fas fa-times me-1"></i>No DMARC
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- WHOIS Information -->
+                                    {% if result.findings.basic.whois %}
+                                    <div>
+                                        <h5 class="mb-2">WHOIS Information</h5>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <table class="table table-striped">
+                                                    <tr>
+                                                        <th>Registrar:</th>
+                                                        <td>{{ result.findings.basic.whois.registrar or 'Unknown' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Creation Date:</th>
+                                                        <td>{{ result.findings.basic.whois.creation_date or 'Unknown' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Expiration Date:</th>
+                                                        <td>{{ result.findings.basic.whois.expiration_date or 'Unknown' }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Updated Date:</th>
+                                                        <td>{{ result.findings.basic.whois.updated_date or 'Unknown' }}</td>
+                                                    </tr>
+                                                    {% if result.findings.basic.whois.domain_age_days is defined %}
+                                                    <tr>
+                                                        <th>Domain Age:</th>
+                                                        <td>
+                                                            {{ result.findings.basic.whois.domain_age_days }} days
+                                                            {% if result.findings.basic.whois.domain_age_days < 30 %}
+                                                            <span class="badge bg-danger ms-2">New domain</span>
+                                                            {% elif result.findings.basic.whois.domain_age_days < 90 %}
+                                                            <span class="badge bg-warning ms-2">Recent domain</span>
+                                                            {% else %}
+                                                            <span class="badge bg-success ms-2">Established domain</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                    {% endif %}
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Port Scan Findings -->
+                                {% if result.findings.ports %}
+                                <div class="findings-section mb-4">
+                                    <h4><i class="fas fa-network-wired me-2 text-warning"></i>Port Scan Results</h4>
+                                    
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <h5 class="mb-2">Summary</h5>
+                                                <div class="d-flex">
+                                                    <div class="me-4">
+                                                        <span class="badge bg-primary p-2">
+                                                            {{ result.findings.ports.summary.total_scanned }} ports scanned
+                                                        </span>
+                                                    </div>
+                                                    <div class="me-4">
+                                                        <span class="badge {% if result.findings.ports.open_ports|length > 5 %}bg-warning{% else %}bg-success{% endif %} p-2">
+                                                            {{ result.findings.ports.open_ports|length }} open ports
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="badge bg-secondary p-2">
+                                                            {{ result.findings.ports.closed_ports|length }} closed/filtered ports
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {% if result.findings.ports.open_ports %}
+                                            <div>
+                                                <h5 class="mb-2">Open Ports</h5>
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Port</th>
+                                                                <th>Service</th>
+                                                                <th>Security Risk</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for port_info in result.findings.ports.open_ports %}
+                                                            <tr>
+                                                                <td>{{ port_info.port }}</td>
+                                                                <td>{{ port_info.service }}</td>
+                                                                <td>
+                                                                    {% if port_info.port in [21, 23, 25, 3389] %}
+                                                                    <span class="badge bg-danger">High</span>
+                                                                    {% elif port_info.port in [53, 8080, 1433, 3306] %}
+                                                                    <span class="badge bg-warning">Medium</span>
+                                                                    {% else %}
+                                                                    <span class="badge bg-success">Low</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            {% else %}
+                                            <div class="alert alert-success">
+                                                <i class="fas fa-check-circle me-2"></i>No open ports detected in the common port range.
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- SSL Certificate Findings -->
+                                {% if result.findings.ssl %}
+                                <div class="findings-section mb-4">
+                                    <h4><i class="fas fa-lock me-2 text-success"></i>SSL Certificate Analysis</h4>
+                                    
+                                    <div class="card">
+                                        <div class="card-body">
+                                            {% if result.findings.ssl.error %}
+                                            <div class="alert alert-danger">
+                                                <i class="fas fa-exclamation-circle me-2"></i>Error: {{ result.findings.ssl.error }}
+                                            </div>
+                                            {% else %}
+                                            <div class="mb-3">
+                                                <h5 class="mb-2">Certificate Status</h5>
+                                                <div class="d-flex mb-3">
+                                                    <span class="badge {% if result.findings.ssl.is_valid %}bg-success{% else %}bg-danger{% endif %} p-2 me-3">
+                                                        {% if result.findings.ssl.is_valid %}
+                                                        <i class="fas fa-check me-1"></i>Valid
+                                                        {% else %}
+                                                        <i class="fas fa-times me-1"></i>Invalid
+                                                        {% endif %}
+                                                    </span>
+                                                    
+                                                    {% if result.findings.ssl.days_until_expiry is defined %}
+                                                    <span class="badge {% if result.findings.ssl.days_until_expiry < 15 %}bg-danger{% elif result.findings.ssl.days_until_expiry < 30 %}bg-warning{% else %}bg-success{% endif %} p-2">
+                                                        <i class="fas fa-calendar-alt me-1"></i>Expires in {{ result.findings.ssl.days_until_expiry }} days
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <h5 class="mb-2">Certificate Details</h5>
+                                                    <table class="table table-striped">
+                                                        <tr>
+                                                            <th>Common Name:</th>
+                                                            <td>{{ result.findings.ssl.subject.get('commonName', 'Unknown') }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Issuer:</th>
+                                                            <td>{{ result.findings.ssl.issuer.get('commonName', 'Unknown') }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Valid From:</th>
+                                                            <td>{{ result.findings.ssl.not_before }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Valid To:</th>
+                                                            <td>{{ result.findings.ssl.not_after }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Signature Algorithm:</th>
+                                                            <td>
+                                                                {{ result.findings.ssl.signature_algorithm }}
+                                                                {% if 'md5' in result.findings.ssl.signature_algorithm|lower or 'sha1' in result.findings.ssl.signature_algorithm|lower %}
+                                                                <span class="badge bg-danger ms-2">Weak</span>
+                                                                {% else %}
+                                                                <span class="badge bg-success ms-2">Strong</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    {% if result.findings.ssl.alternative_names %}
+                                                    <h5 class="mb-2">Alternative Names</h5>
+                                                    <div class="card">
+                                                        <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                                                            <ul class="list-group">
+                                                                {% for name in result.findings.ssl.alternative_names %}
+                                                                <li class="list-group-item">{{ name }}</li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- HTTP Headers Findings -->
+                                {% if result.findings.headers %}
+                                <div class="findings-section mb-4">
+                                    <h4><i class="fas fa-code me-2 text-info"></i>HTTP Headers Analysis</h4>
+                                    
+                                    <div class="card">
+                                        <div class="card-body">
+                                            {% if result.findings.headers.error %}
+                                            <div class="alert alert-danger">
+                                                <i class="fas fa-exclamation-circle me-2"></i>Error: {{ result.findings.headers.error }}
+                                            </div>
+                                            {% else %}
+                                            <div class="mb-3">
+                                                <h5 class="mb-2">Security Headers</h5>
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Header</th>
+                                                                <th>Status</th>
+                                                                <th>Importance</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for header, present in result.findings.headers.security_headers.items() %}
+                                                            <tr>
+                                                                <td>{{ header }}</td>
+                                                                <td>
+                                                                    {% if present %}
+                                                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Present</span>
+                                                                    {% else %}
+                                                                    <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Missing</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                                <td>
+                                                                    {% if header in ['Strict-Transport-Security', 'Content-Security-Policy', 'X-Frame-Options'] %}
+                                                                    <span class="badge bg-danger">Critical</span>
+                                                                    {% elif header in ['X-XSS-Protection', 'X-Content-Type-Options'] %}
+                                                                    <span class="badge bg-warning">Important</span>
+                                                                    {% else %}
+                                                                    <span class="badge bg-info">Recommended</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <h5 class="mb-2">Server Information</h5>
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            {% if result.findings.headers.server_disclosure %}
+                                                            <div class="alert alert-warning">
+                                                                <i class="fas fa-exclamation-triangle me-2"></i>Server information is disclosed
+                                                                <div class="mt-2">
+                                                                    <code>Server: {{ result.findings.headers.server_info }}</code>
+                                                                </div>
+                                                            </div>
+                                                            {% else %}
+                                                            <div class="alert alert-success">
+                                                                <i class="fas fa-check-circle me-2"></i>No server information disclosed
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <h5 class="mb-2">Cookie Security</h5>
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            {% if result.findings.headers.cookies %}
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Cookie</th>
+                                                                            <th>Secure</th>
+                                                                            <th>HttpOnly</th>
+                                                                            <th>SameSite</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for cookie in result.findings.headers.cookies %}
+                                                                        <tr>
+                                                                            <td>{{ cookie.name }}</td>
+                                                                            <td>
+                                                                                {% if cookie.secure %}
+                                                                                <i class="fas fa-check text-success"></i>
+                                                                                {% else %}
+                                                                                <i class="fas fa-times text-danger"></i>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td>
+                                                                                {% if cookie.httponly %}
+                                                                                <i class="fas fa-check text-success"></i>
+                                                                                {% else %}
+                                                                                <i class="fas fa-times text-danger"></i>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td>
+                                                                                {% if cookie.samesite %}
+                                                                                <i class="fas fa-check text-success"></i>
+                                                                                {% else %}
+                                                                                <i class="fas fa-times text-danger"></i>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            {% else %}
+                                                            <div class="alert alert-info">
+                                                                <i class="fas fa-info-circle me-2"></i>No cookies found
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Security Recommendations -->
+                                {% if result.recommendations %}
+                                <div class="findings-section mb-4">
+                                    <h4><i class="fas fa-tasks me-2 text-danger"></i>Security Recommendations</h4>
+                                    
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Issue</th>
+                                                            <th>Description</th>
+                                                            <th>Severity</th>
+                                                            <th>Recommendation</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for rec in result.recommendations %}
+                                                        <tr>
+                                                            <td><strong>{{ rec.title }}</strong></td>
+                                                            <td>{{ rec.description }}</td>
+                                                            <td>
+                                                                <span class="badge {% if rec.severity == 'critical' %}bg-danger{% elif rec.severity == 'high' %}bg-warning text-dark{% elif rec.severity == 'medium' %}bg-info{% else %}bg-success{% endif %}">
+                                                                    {{ rec.severity|capitalize }}
+                                                                </span>
+                                                            </td>
+                                                            <td>{{ rec.implementation }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const scanBtn = document.getElementById('scan-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const scanStatus = document.getElementById('scan-status');
+        const scanProgress = document.getElementById('scan-progress');
+        const scanDetail = document.getElementById('scan-detail');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading overlay
+            loadingOverlay.style.display = 'flex';
+            
+            const target = document.getElementById('target').value;
+            const scanType = document.getElementById('scan_type').value;
+            
+            // Update status
+            scanStatus.textContent = `Scanning ${target}...`;
+            scanDetail.textContent = 'Initializing scan...';
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += 5;
+                if (progress > 95) {
+                    clearInterval(progressInterval);
+                }
+                scanProgress.style.width = `${progress}%`;
+                
+                // Update scan details based on progress
+                if (progress === 15) {
+                    scanDetail.textContent = 'Running DNS lookups...';
+                } else if (progress === 30) {
+                    scanDetail.textContent = 'Analyzing domain information...';
+                } else if (progress === 45) {
+                    scanDetail.textContent = 'Checking SSL certificates...';
+                } else if (progress === 60) {
+                    scanDetail.textContent = 'Scanning common ports...';
+                } else if (progress === 75) {
+                    scanDetail.textContent = 'Analyzing security headers...';
+                } else if (progress === 90) {
+                    scanDetail.textContent = 'Calculating risk score...';
+                }
+            }, 200);
+            
+            // Submit the form via AJAX
+            const formData = new FormData(form);
+            fetch('{{ url_for("network_analyzer") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                clearInterval(progressInterval);
+                scanProgress.style.width = '100%';
+                scanDetail.textContent = 'Scan complete!';
+                
+                // If the response is a redirect, follow it
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    return response.json();
+                }
+            })
+            .then(data => {
+                if (data && data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                scanStatus.textContent = 'Scan failed';
+                scanDetail.textContent = 'There was an error performing the scan. Please try again.';
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                }, 3000);
+            });
+        });
+    });
+</script>
+{% endblock %} 

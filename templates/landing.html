@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}PhishGuard - Advanced Phishing Detection & Network Security{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-7">
+            <h1 class="display-4 mb-4">
+                <span class="text-primary">PhishGuard</span> - Your Security Shield in the Digital World
+            </h1>
+            <p class="lead mb-4">
+                Protect yourself against phishing attacks and network vulnerabilities with our advanced AI-powered security platform.
+            </p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg px-4">
+                    <i class="fas fa-user-plus me-2"></i>Register
+                </a>
+            </div>
+            <div class="alert alert-info mt-4">
+                <i class="fas fa-info-circle me-2"></i>You must be logged in to use the scanning features.
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card bg-dark text-white shadow-lg">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-center">
+                        <div class="security-shield-icon mb-3">
+                            <i class="fas fa-shield-alt fa-5x text-primary"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-center mb-4">Comprehensive Security Analysis</h3>
+                    <ul class="list-group list-group-flush bg-transparent">
+                        <li class="list-group-item bg-transparent text-white border-light">
+                            <i class="fas fa-check-circle text-success me-2"></i>Advanced Phishing Detection
+                        </li>
+                        <li class="list-group-item bg-transparent text-white border-light">
+                            <i class="fas fa-check-circle text-success me-2"></i>Network Vulnerability Scanning
+                        </li>
+                        <li class="list-group-item bg-transparent text-white border-light">
+                            <i class="fas fa-check-circle text-success me-2"></i>SSL Certificate Analysis
+                        </li>
+                        <li class="list-group-item bg-transparent text-white border-light">
+                            <i class="fas fa-check-circle text-success me-2"></i>Security Headers Inspection
+                        </li>
+                        <li class="list-group-item bg-transparent text-white border-light">
+                            <i class="fas fa-check-circle text-success me-2"></i>Detailed Security Reports
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Why Choose PhishGuard?</h2>
+            <hr class="w-25 mx-auto mb-5">
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-robot fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">AI-Powered Analysis</h4>
+                    <p class="card-text">Our machine learning models are trained on thousands of phishing examples to accurately detect threats.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-lock fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Network Security Analyzer</h4>
+                    <p class="card-text">Comprehensive analysis of network security including DNS, ports, SSL, and HTTP headers.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-chart-line fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Detailed Reports</h4>
+                    <p class="card-text">Get comprehensive security reports with actionable recommendations to improve security.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row my-5">
+        <div class="col-12 text-center">
+            <h2 class="mb-4">Ready to protect yourself?</h2>
+            <p class="lead mb-4">Create an account now to start scanning and analyzing potential threats.</p>
+            <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-shield-alt me-2"></i>Get Started
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any specific landing page JavaScript here
+</script>
+{% endblock %} 
