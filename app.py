@@ -206,38 +206,161 @@ def index():
                           feedback_form=feedback_form, result=None, 
                           history=session.get('history', []), phishing_types=get_phishing_types())
         
-        # Ensure URL has scheme
-        if not url.startswith('http'):
-            url = 'http://' + url
-        
+        # Clean and normalize the URL
         try:
-            # Check if URL is potentially dangerous before even analyzing
+            # Remove leading/trailing whitespace and normalize
+            url = url.strip().lower()
+            
+            # Remove any unwanted characters
+            url = re.sub(r'[\n\r\t]', '', url)
+            
+            # Check for basic URL structure
+            if not url:
+                raise ValueError("URL cannot be empty")
+                
+            # Handle special cases first
+            if url.startswith('data:'):
+                raise ValueError("Data URLs are not allowed for security reasons")
+                
+            if url.startswith('file:'):
+                raise ValueError("File URLs are not allowed for security reasons")
+                
+            if url.startswith('javascript:'):
+                raise ValueError("JavaScript URLs are not allowed for security reasons")
+                
+            # Add scheme if missing
+            if not url.startswith(('http://', 'https://')):
+                # Check if it's a valid domain-like string
+                domain_pattern = r'^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
+                if re.match(domain_pattern, url):
+                    url = 'http://' + url
+                else:
+                    # Check if it might be missing www
+                    if re.match(domain_pattern, 'www.' + url):
+                        url = 'http://www.' + url
+                    else:
+                        raise ValueError("Invalid URL format. Please enter a valid domain name or full URL.")
+            
+            # Parse and validate URL structure
+            try:
+                parsed = urlparse(url)
+                
+                # Check for required components
+                if not all([parsed.scheme, parsed.netloc]):
+                    raise ValueError("Invalid URL structure. Missing scheme or domain.")
+                
+                # Validate domain format
+                domain = parsed.netloc
+                if not re.match(r'^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:\d{1,5})?$', domain):
+                    raise ValueError("Invalid domain format.")
+                
+                # Check for IP addresses
+                ip_pattern = r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$'
+                domain_without_port = domain.split(':')[0]
+                if re.match(ip_pattern, domain_without_port):
+                    # Validate IP address format
+                    try:
+                        parts = [int(part) for part in domain_without_port.split('.')]
+                        if not all(0 <= part <= 255 for part in parts):
+                            raise ValueError("Invalid IP address format.")
+                    except:
+                        raise ValueError("Invalid IP address format.")
+                
+                # Handle IDN (International Domain Names)
+                try:
+                    from idna import encode as idna_encode
+                    ascii_domain = idna_encode(domain.encode('utf-8')).decode('ascii')
+                    if ascii_domain != domain:
+                        url = url.replace(domain, ascii_domain)
+                except ImportError:
+                    # If idna module is not available, use basic conversion
+                    ascii_domain = domain.encode('idna').decode('ascii')
+                    if ascii_domain != domain:
+                        url = url.replace(domain, ascii_domain)
+                except Exception:
+                    # If IDN conversion fails, continue with original URL
+                    pass
+                
+                # Validate port if present
+                if ':' in domain:
+                    try:
+                        port = int(domain.split(':')[1])
+                        if not (0 <= port <= 65535):
+                            raise ValueError("Invalid port number.")
+                    except:
+                        raise ValueError("Invalid port format.")
+                
+                # Check URL length
+                if len(url) > 2048:
+                    raise ValueError("URL is too long. Maximum length is 2048 characters.")
+                
+            except Exception as e:
+                raise ValueError(f"URL validation error: {str(e)}")
+            
+            # Check for obviously malicious patterns
             if is_obviously_phishing(url):
                 prediction = {
                     'is_phishing': True,
                     'probability': 1.0,
-                    'features': {'obvious_phishing': True}
+                    'features': {
+                        'obvious_phishing': True,
+                        'detection_method': 'pattern_match',
+                        'malicious_indicators': get_malicious_indicators(url)
+                    }
                 }
                 result = format_result(url, prediction)
             else:
                 # Get prediction from model
-                prediction = phishing_model.predict(url)
-                result = format_result(url, prediction)
+                try:
+                    prediction = phishing_model.predict(url)
+                    
+                    # Check for prediction errors
+                    if prediction is None:
+                        raise ValueError("Unable to analyze URL - prediction failed")
+                        
+                    if 'error' in prediction.get('features', {}):
+                        error_msg = prediction['features'].get('error', 'Unknown error occurred')
+                        raise ValueError(f"Error analyzing URL: {error_msg}")
+                    
+                    # Enhance prediction with additional checks
+                    prediction = enhance_prediction(prediction, url)
+                    
+                    # Format the result
+                    result = format_result(url, prediction)
+                    
+                except Exception as e:
+                    raise ValueError(f"Error during URL analysis: {str(e)}")
             
-            # Add to history (will be stored in session)
+            # Add to history
             add_to_history(result)
             
             # Save to database if user is logged in
             if 'user_id' in session:
-                conn = get_db_connection()
-                conn.execute('INSERT INTO scan_history (user_id, target, scan_type, results) VALUES (?, ?, ?, ?)',
-                            (session['user_id'], url, 'phishing', json.dumps(result)))
-                conn.commit()
-                conn.close()
-                
+                try:
+                    conn = get_db_connection()
+                    conn.execute('INSERT INTO scan_history (user_id, target, scan_type, results) VALUES (?, ?, ?, ?)',
+                                (session['user_id'], url, 'phishing', json.dumps(result)))
+                    conn.commit()
+                    conn.close()
+                except Exception as e:
+                    print(f"Database error: {str(e)}")
+                    # Continue without saving to database
+                    
+        except ValueError as ve:
+            error_message = str(ve)
+            # Make error messages more user-friendly
+            if "URL validation error" in error_message:
+                error_message = error_message.replace("URL validation error: ", "")
+            flash(error_message, "danger")
+            return render_template('index.html', form=form, batch_form=batch_form,
+                                feedback_form=feedback_form, result=None,
+                                history=session.get('history', []), phishing_types=get_phishing_types())
         except Exception as e:
-            print(f"Error checking URL: {str(e)}")
-            flash(f"Error checking URL: {str(e)}", "danger")
+            print(f"Error analyzing URL: {str(e)}")
+            flash("An unexpected error occurred while analyzing the URL. Please try again.", "danger")
+            return render_template('index.html', form=form, batch_form=batch_form,
+                                feedback_form=feedback_form, result=None,
+                                history=session.get('history', []), phishing_types=get_phishing_types())
     
     # Get history from session
     history = session.get('history', [])
@@ -245,6 +368,203 @@ def index():
     return render_template('index.html', form=form, batch_form=batch_form, 
                           feedback_form=feedback_form, result=result, 
                           history=history, phishing_types=get_phishing_types())
+
+def get_malicious_indicators(url):
+    """Get detailed information about why a URL was flagged as obviously phishing."""
+    indicators = []
+    parsed = urlparse(url)
+    domain = parsed.netloc.lower()
+    
+    # Check for IP-based URL
+    if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', domain):
+        indicators.append("IP address used instead of domain name")
+    
+    # Check for suspicious TLD
+    suspicious_tlds = ['.tk', '.xyz', '.top', '.club', '.online', '.site', '.cc', '.cf', '.ga', '.gq', '.ml']
+    if any(domain.endswith(tld) for tld in suspicious_tlds):
+        indicators.append("Suspicious top-level domain (TLD)")
+    
+    # Check for brand impersonation
+    brand_names = ['paypal', 'apple', 'microsoft', 'google', 'facebook', 'amazon']
+    if any(brand in domain and not domain.endswith(f"{brand}.com") for brand in brand_names):
+        indicators.append("Possible brand impersonation attempt")
+    
+    # Check for suspicious keywords
+    suspicious_keywords = ['secure', 'login', 'verify', 'account', 'update', 'confirm']
+    if any(keyword in url.lower() for keyword in suspicious_keywords):
+        indicators.append("Contains suspicious keywords")
+    
+    # Check for excessive subdomains
+    if domain.count('.') > 3:
+        indicators.append("Excessive number of subdomains")
+    
+    # Check for URL shorteners
+    shorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co']
+    if any(shortener in domain for shortener in shorteners):
+        indicators.append("Uses URL shortening service")
+    
+    # Check for special characters
+    if re.search(r'[^a-zA-Z0-9.-]', domain):
+        indicators.append("Contains special characters in domain")
+    
+    return indicators
+
+def enhance_prediction(prediction, url):
+    """Enhance the model's prediction with additional security checks."""
+    features = prediction.get('features', {})
+    
+    # Initialize enhanced features if not present
+    if 'enhanced_checks' not in features:
+        features['enhanced_checks'] = {}
+    
+    try:
+        # Check for data URI schemes (potential XSS)
+        if 'data:' in url:
+            features['enhanced_checks']['data_uri_detected'] = True
+            prediction['probability'] = max(prediction['probability'], 0.9)
+        
+        # Check for IP-based URLs
+        if features.get('has_ip', False):
+            features['enhanced_checks']['ip_url_detected'] = True
+            prediction['probability'] = max(prediction['probability'], 0.85)
+        
+        # Check for homograph attacks
+        if features.get('has_homograph', False):
+            features['enhanced_checks']['homograph_attack_detected'] = True
+            prediction['probability'] = max(prediction['probability'], 0.95)
+        
+        # Check for excessive subdomains
+        if features.get('subdomain_count', 0) > 3:
+            features['enhanced_checks']['excessive_subdomains'] = True
+            prediction['probability'] = max(prediction['probability'], 0.7)
+        
+        # Check for suspicious TLD
+        if features.get('has_suspicious_tld', False):
+            features['enhanced_checks']['suspicious_tld_detected'] = True
+            prediction['probability'] = max(prediction['probability'], 0.8)
+        
+        # Check for brand impersonation
+        if features.get('brand_in_subdomain', False):
+            features['enhanced_checks']['brand_impersonation_detected'] = True
+            prediction['probability'] = max(prediction['probability'], 0.9)
+        
+        # Update is_phishing based on enhanced probability
+        prediction['is_phishing'] = prediction['probability'] >= 0.5
+        
+    except Exception as e:
+        print(f"Error in enhance_prediction: {str(e)}")
+        # Don't modify the prediction if enhancement fails
+        
+    return prediction
+
+def format_result(url, prediction):
+    """Create a more detailed and structured result object for display."""
+    is_phishing = prediction.get('is_phishing', False)
+    probability = prediction.get('probability', 0.5)
+    features = prediction.get('features', {})
+    
+    # Get enhanced checks
+    enhanced_checks = features.get('enhanced_checks', {})
+    
+    # Determine specific threats
+    threats = []
+    if enhanced_checks.get('data_uri_detected'):
+        threats.append("Potential XSS attack (Data URI)")
+    if enhanced_checks.get('ip_url_detected'):
+        threats.append("IP-based phishing attempt")
+    if enhanced_checks.get('homograph_attack_detected'):
+        threats.append("Homograph attack detected")
+    if enhanced_checks.get('brand_impersonation_detected'):
+        threats.append("Brand impersonation attempt")
+    if enhanced_checks.get('suspicious_tld_detected'):
+        threats.append("Suspicious TLD detected")
+    
+    message = get_message(prediction)
+    phishing_type = determine_phishing_type(features, is_phishing)
+    
+    # Calculate risk level
+    risk_level = "Low"
+    risk_color = "success"
+    if is_phishing:
+        if probability > 0.9:
+            risk_level = "Critical"
+            risk_color = "danger"
+        elif probability > 0.7:
+            risk_level = "High"
+            risk_color = "danger"
+        elif probability > 0.5:
+            risk_level = "Medium"
+            risk_color = "warning"
+    
+    # Format suspicious indicators
+    suspicious_indicators = []
+    
+    # Core indicators
+    if features.get('has_ip', False):
+        suspicious_indicators.append({"name": "IP Address in URL", "severity": "high"})
+    if features.get('is_shortened', False):
+        suspicious_indicators.append({"name": "URL Shortener Used", "severity": "high"})
+    if features.get('has_at_symbol', False):
+        suspicious_indicators.append({"name": "@ Symbol in URL", "severity": "high"})
+    if features.get('has_suspicious_tld', False):
+        suspicious_indicators.append({"name": "Suspicious TLD", "severity": "medium"})
+    if features.get('has_redirection', False):
+        suspicious_indicators.append({"name": "URL Redirection", "severity": "medium"})
+    
+    # Enhanced indicators
+    if features.get('has_homograph', False):
+        suspicious_indicators.append({"name": "Homograph Attack", "severity": "critical"})
+    if features.get('mixed_chars', False):
+        suspicious_indicators.append({"name": "Mixed Character Sets", "severity": "high"})
+    if features.get('repeated_chars', False):
+        suspicious_indicators.append({"name": "Repeated Characters", "severity": "medium"})
+    if features.get('multiple_tlds_in_path', False):
+        suspicious_indicators.append({"name": "Multiple TLDs in Path", "severity": "high"})
+    
+    # Generate recommendations
+    recommendations = []
+    if is_phishing:
+        recommendations.append({
+            "title": "Do Not Visit This Site",
+            "description": "This URL has been identified as potentially malicious.",
+            "severity": "high"
+        })
+        if threats:
+            recommendations.append({
+                "title": "Specific Threats Detected",
+                "description": "The following threats were identified: " + ", ".join(threats),
+                "severity": "high"
+            })
+        recommendations.append({
+            "title": "Check Official Sources",
+            "description": "If you were expecting to visit a legitimate website, go directly to the official site by typing the address in your browser.",
+            "severity": "medium"
+        })
+    else:
+        recommendations.append({
+            "title": "Exercise Normal Caution",
+            "description": "While this URL appears legitimate, always be careful when entering sensitive information online.",
+            "severity": "low"
+        })
+    
+    result = {
+        'url': url,
+        'is_phishing': is_phishing,
+        'probability': probability,
+        'risk_level': risk_level,
+        'risk_color': risk_color,
+        'message': message,
+        'phishing_type': phishing_type,
+        'suspicious_indicators': suspicious_indicators,
+        'recommendations': recommendations,
+        'threats': threats,
+        'features': features,
+        'width_class': get_width_class(probability),
+        'check_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'id': str(uuid.uuid4())
+    }
+    
+    return result
 
 @app.route('/api/check', methods=['POST'])
 def api_check():
@@ -870,6 +1190,7 @@ def network_analyzer():
         return redirect(url_for('login'))
     
     form = NetworkScanForm()
+    result = None
     
     if form.validate_on_submit():
         target = form.target.data
@@ -881,54 +1202,51 @@ def network_analyzer():
             return redirect(url_for('network_analyzer'))
         
         try:
+            # Normalize target URL if needed
+            if not target.startswith(('http://', 'https://')) and not is_valid_ip(target):
+                target = 'http://' + target
+            
             # Perform the scan based on type
             result = perform_network_scan(target, scan_type)
             
-            # Calculate risk score
-            risk_score = calculate_risk_score(result)
-            result['risk_score'] = risk_score
-            
-            # Generate recommendations
-            recommendations = generate_recommendations(result)
-            result['recommendations'] = recommendations
-            
-            # Add scan timestamp
-            result['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
-            # Add unique ID for the scan
-            scan_id = str(uuid.uuid4())
-            result['scan_id'] = scan_id
-            
-            # Save result to database
+            # Save scan to history
             conn = get_db_connection()
-            user_id = session.get('user_id')
-            save_scan_to_db(conn, user_id, target, scan_type, json.dumps(result))
+            save_scan_to_db(conn, session['user_id'], target, scan_type, json.dumps(result))
+            conn.commit()
             conn.close()
             
             # For AJAX requests, return JSON
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({
                     'success': True,
-                    'redirect': url_for('scan_report', scan_id=scan_id)
+                    'result': result
                 })
             
-            # For regular form submissions, redirect to the report page
-            return redirect(url_for('scan_report', scan_id=scan_id))
+            # For regular form submissions, render template with results
+            return render_template('network_analyzer.html', 
+                                form=form, 
+                                result=result, 
+                                scan_complete=True)
             
         except Exception as e:
             app.logger.error(f"Scan error: {str(e)}")
-            flash(f'Error performing scan: {str(e)}', 'danger')
+            error_message = str(e) if str(e) else "An error occurred during the scan."
+            flash(f'Error performing scan: {error_message}', 'danger')
             
             # For AJAX requests, return error JSON
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({
                     'success': False,
-                    'error': str(e)
+                    'error': error_message
                 }), 500
-                
-            return redirect(url_for('network_analyzer'))
+            
+            return render_template('network_analyzer.html', 
+                                form=form, 
+                                error=error_message)
     
-    return render_template('network_analyzer.html', form=form)
+    return render_template('network_analyzer.html', 
+                         form=form, 
+                         result=result)
 
 def save_scan_to_db(conn, user_id, target, scan_type, result):
     """Save scan results to database and return the scan_id"""

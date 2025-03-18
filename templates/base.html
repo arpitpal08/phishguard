@@ -18,6 +18,66 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     
     {% block extra_css %}{% endblock %}
+    <style>
+        /* Footer styles */
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: #002147;
+            color: white !important;
+            text-align: center;
+            padding: 10px 0;
+            z-index: 9999;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .footer span {
+            color: white !important;
+        }
+        
+        /* Add padding to main content to prevent overlap with fixed footer */
+        main {
+            padding-bottom: 70px;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* Make sure the body takes up at least the full viewport height */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+        
+        /* Main content should grow to fill available space */
+        main {
+            flex: 1 0 auto;
+        }
+
+        /* Social media icons in footer */
+        .footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer a:hover {
+            opacity: 1;
+        }
+
+        /* Copyright text style */
+        .copyright-text {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+    </style>
 </head>
 <body>
     <!-- Rolling Announcement Bar -->
@@ -138,13 +198,13 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer mt-5 py-3">
-        <div class="container text-center">
-            <span class="text-muted">© 2025 ARPIT. All rights reserved. PhishGuard - AI-Powered Phishing Detection</span>
+    <footer class="footer">
+        <div class="container">
+            <span>© 2024 ARPIT. All rights reserved. PhishGuard - AI-Powered Phishing Detection</span>
             <div class="mt-2">
-                <a href="#" class="me-3"><i class="fab fa-github"></i></a>
-                <a href="#" class="me-3"><i class="fab fa-linkedin"></i></a>
-                <a href="#" class="me-3"><i class="fab fa-twitter"></i></a>
+                <a href="https://github.com/yourusername/phishguard" target="_blank"><i class="fab fa-github"></i></a>
+                <a href="https://linkedin.com/in/yourusername" target="_blank"><i class="fab fa-linkedin"></i></a>
+                <a href="https://twitter.com/yourusername" target="_blank"><i class="fab fa-twitter"></i></a>
             </div>
         </div>
     </footer>
