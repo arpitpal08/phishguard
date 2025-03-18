@@ -53,4 +53,14 @@ uploads/*
 Thumbs.db
 
 # Logs
-*.log 
+*.log
+
+# Database
+*.db
+*.sqlite3
+
+# Cache
+.cache/
+
+# Local environment
+.env.local 

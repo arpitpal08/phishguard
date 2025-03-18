@@ -1,131 +1,140 @@
-# PhishGuard: AI-Powered Phishing Detection Tool
+# PhishGuard - Advanced Security Analysis Tool
 
-PhishGuard is an advanced web application that uses machine learning to detect phishing URLs. This project was developed as a final year project in cybersecurity.
+PhishGuard is a comprehensive security analysis tool that combines phishing detection and network security scanning capabilities. It provides real-time analysis of URLs and network endpoints with AI-powered detection and detailed security assessments.
 
 ## Features
 
-- **AI-Powered Analysis**: Utilizes a Random Forest classifier to identify phishing URLs with high accuracy
-- **Real-Time Detection**: Instantly analyzes URLs to determine if they're potential phishing attempts
-- **Comprehensive Feature Analysis**: Examines multiple URL features including domain characteristics, suspicious patterns, and security indicators
-- **Detailed Reports**: Provides clear risk assessments with probability scores and feature breakdowns
-- **Batch Processing**: Supports checking multiple URLs at once via file upload
-- **User-Friendly Interface**: Clean, responsive design with intuitive visualization of results
-- **API Access**: JSON API endpoint for integration with other applications
+### Phishing Detection
+- AI-powered phishing URL detection
+- 30+ advanced detection features
+- Real-time analysis
+- Detailed threat assessment
+- Historical tracking of scanned URLs
 
-## Tech Stack
+### Network Security Analysis
+- Basic security scanning (DNS, WHOIS)
+- Port scanning
+- SSL/TLS certificate analysis
+- HTTP security headers analysis
+- Full security assessment
 
-- **Backend**: Python, Flask
-- **Machine Learning**: scikit-learn, pandas, numpy, NLTK
-- **Frontend**: HTML5, CSS3, JavaScript, Bootstrap 5
-- **Data Processing**: Beautiful Soup, Requests
+### Dashboard & Reporting
+- Interactive security dashboard
+- Risk score visualization
+- Detailed scan reports
+- PDF report generation
+- Historical data tracking
+
+### API Integration
+- RESTful API access
+- API key management
+- Scheduled scanning
+- Batch URL processing
+
+## Technology Stack
+
+- Python 3.x
+- Flask (Web Framework)
+- SQLite (Database)
+- scikit-learn (Machine Learning)
+- NLTK (Natural Language Processing)
+- Chart.js (Data Visualization)
+- Bootstrap 5 (Frontend)
 
 ## Installation
 
 1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/phishguard.git
-   cd phishguard
-   ```
+```bash
+git clone https://github.com/yourusername/phishguard.git
+cd phishguard
+```
 
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+2. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
 3. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-4. Download required NLTK data:
-   ```
-   python download_nltk_data.py
-   ```
-
-5. Run the application:
-   ```
-   python app.py
-   ```
-
-6. Open your browser and navigate to:
-   ```
-   http://localhost:5000
-   ```
+4. Initialize the database:
+```bash
+python app.py
+```
 
 ## Usage
 
-### Single URL Check
-
-1. Enter a URL in the input field on the homepage
-2. Click "Check URL"
-3. View the detailed analysis results
-
-### Batch URL Check
-
-1. Prepare a text file with one URL per line
-2. Click "Choose File" in the batch check section
-3. Upload your file and click "Check URLs"
-4. View the analysis results for all URLs
-
-### API Usage
-
-Send a POST request to `/api/check` with a JSON payload:
-
-```json
-{
-  "url": "https://example.com"
-}
+1. Start the application:
+```bash
+python app.py
 ```
 
-Response format:
+2. Access the web interface at `http://localhost:5000`
 
+3. Register an account and log in
+
+4. Start using the features:
+   - URL scanning for phishing detection
+   - Network security analysis
+   - View the security dashboard
+   - Generate reports
+
+## API Usage
+
+### Authentication
+```bash
+curl -X POST http://localhost:5000/api/scan \
+  -H "X-API-Key: your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
+```
+
+### Response Format
 ```json
 {
   "url": "https://example.com",
   "is_phishing": false,
   "probability": 0.12,
-  "message": "This URL appears to be legitimate with high confidence.",
-  "features": {
-    "url_length": 19,
-    "dot_count": 1,
-    "is_shortened": false,
-    "has_suspicious": false,
-    "has_ip": false,
-    "domain_age": 1,
-    "uses_https": true,
-    "domain_length": 11,
-    "special_char_count": 0,
-    "subdomain_count": 0
+  "risk_score": 25,
+  "findings": {
+    "basic": {...},
+    "ssl": {...},
+    "headers": {...}
   }
 }
 ```
 
-## How It Works
+## Security Features
 
-PhishGuard uses a machine learning approach to detect phishing URLs:
+- AI-based phishing detection
+- Domain age verification
+- SSL certificate validation
+- Security header analysis
+- Port scanning
+- DNS record verification
+- WHOIS information analysis
+- Suspicious TLD detection
+- Brand impersonation detection
+- URL structure analysis
+- Entropy-based analysis
+- Homograph attack detection
 
-1. **Feature Extraction**: When a URL is submitted, multiple features are extracted including length, domain structure, and suspicious patterns.
-2. **Preliminary Filtering**: Basic pattern matching is used to quickly identify obviously malicious URLs.
-3. **Machine Learning Analysis**: A Random Forest classifier analyzes the extracted features to determine a phishing probability score.
-4. **Risk Assessment**: A comprehensive risk assessment is generated based on the model's prediction and feature analysis.
+## Contributing
 
-The model is trained on a dataset of both legitimate and phishing URLs, and continually refined to improve accuracy.
-
-## Future Enhancements
-
-- Content-based analysis of website HTML/CSS for brand impersonation detection
-- Browser extension for real-time protection while browsing
-- Enhanced model training with larger and more diverse datasets
-- User feedback loop to improve detection accuracy over time
-- Integration with popular security tools and platforms
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-- Special thanks to our cybersecurity professors and mentors for their guidance
-- The open-source community for providing excellent tools and libraries
-- Security researchers who continually share phishing techniques and countermeasures 
+- Thanks to all contributors who have helped with the project
+- Special thanks to the open-source community for the tools and libraries used 
