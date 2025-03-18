@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}PhishGuard - AI-Powered Phishing Detection{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary">PhishGuard</h1>
+                <p class="lead">AI-Powered Phishing Detection to Keep You Safe Online</p>
+                <div class="d-flex justify-content-center">
+                    <div class="border-bottom border-3 border-primary" style="width: 100px;"></div>
+                </div>
+            </div>
+
+            <div class="card shadow-lg border-0 mb-5">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0 fs-5"><i class="fas fa-search me-2"></i>Check a URL</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('index') }}">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.url.label(class="form-label") }}
+                            {{ form.url(class="form-control form-control-lg", placeholder="Enter a URL to check for phishing") }}
+                            {% if form.url.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.url.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+                    </form>
+                </div>
+            </div>
+
+            {% if result %}
+            <div class="card shadow-lg border-0 mb-5 result-card {% if result.is_phishing %}border-danger{% else %}border-success{% endif %}" id="result">
+                <div class="card-header {% if result.is_phishing %}bg-danger{% else %}bg-success{% endif %} text-white">
+                    <h3 class="mb-0 fs-5">
+                        {% if result.is_phishing %}
+                            <i class="fas fa-exclamation-triangle me-2"></i>Phishing Detected!
+                        {% else %}
+                            <i class="fas fa-check-circle me-2"></i>URL Appears Safe
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <h4 class="h5 mb-3">URL: <a href="#" class="text-truncate text-decoration-none">{{ result.url }}</a></h4>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">Phishing Probability</span>
+                            <span class="badge {% if result.is_phishing %}bg-danger{% else %}bg-success{% endif %}">{{ (result.probability * 100)|round(1) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar {% if result.is_phishing %}bg-danger{% else %}bg-success{% endif %}" role="progressbar" 
+                                 style="width: {{ (result.probability * 100)|round(1) }}%" 
+                                 aria-valuenow="{{ (result.probability * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    <div class="alert {% if result.is_phishing %}alert-danger{% else %}alert-success{% endif %} mb-4">
+                        <i class="fas {% if result.is_phishing %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                        {{ result.message }}
+                    </div>
+
+                    <div class="mb-0">
+                        <h5 class="mb-3">Detection Features:</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Feature</th>
+                                        <th>Value</th>
+                                        <th>Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for key, value in result.features.items() %}
+                                    <tr>
+                                        <td>{{ key|replace('_', ' ')|title }}</td>
+                                        <td>
+                                            {% if value is sameas true %}
+                                                <span class="badge bg-danger">Yes</span>
+                                            {% elif value is sameas false %}
+                                                <span class="badge bg-success">No</span>
+                                            {% else %}
+                                                {{ value }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if key in ['has_suspicious', 'is_shortened', 'has_ip', 'special_char_count'] %}
+                                                {% if value is sameas true or (key == 'special_char_count' and value > 2) %}
+                                                    <i class="fas fa-arrow-up text-danger"></i> High
+                                                {% else %}
+                                                    <i class="fas fa-arrow-down text-success"></i> Low
+                                                {% endif %}
+                                            {% elif key == 'uses_https' %}
+                                                {% if value is sameas true %}
+                                                    <i class="fas fa-arrow-down text-success"></i> Low
+                                                {% else %}
+                                                    <i class="fas fa-arrow-up text-danger"></i> High
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="fas fa-minus text-secondary"></i> Medium
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h3 class="mb-0 fs-5"><i class="fas fa-upload me-2"></i>Batch Check URLs</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('batch_check') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Upload a file with URLs (one per line)</label>
+                            <input type="file" name="file" id="file" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Check URLs</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
+                        <i class="fas fa-robot fs-3 text-primary"></i>
+                    </div>
+                    <h3 class="h5 fw-bold">AI-Powered</h3>
+                    <p class="text-muted mb-0">Uses advanced machine learning algorithms to detect phishing attempts with high accuracy.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
+                        <i class="fas fa-bolt fs-3 text-primary"></i>
+                    </div>
+                    <h3 class="h5 fw-bold">Real-Time Protection</h3>
+                    <p class="text-muted mb-0">Get instant analysis of any URL to determine if it's a potential threat before visiting.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow h-100">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
+                        <i class="fas fa-chart-line fs-3 text-primary"></i>
+                    </div>
+                    <h3 class="h5 fw-bold">Detailed Analysis</h3>
+                    <p class="text-muted mb-0">View comprehensive analysis of each URL with detailed features and risk assessments.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Smooth scroll to result
+    document.addEventListener('DOMContentLoaded', function() {
+        const resultElement = document.getElementById('result');
+        if (resultElement) {
+            resultElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+</script>
+{% endblock %} 

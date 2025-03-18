@@ -1,0 +1,9 @@
+flask==3.1.0
+scikit-learn==1.6.1
+pandas==2.2.3
+numpy
+nltk==3.9.1
+requests
+beautifulsoup4
+joblib
+flask-wtf 

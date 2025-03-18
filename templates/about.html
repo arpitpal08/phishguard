@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}About PhishGuard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <h1 class="display-5 fw-bold text-primary mb-4">About PhishGuard</h1>
+            
+            <div class="card shadow-lg border-0 mb-5">
+                <div class="card-body p-4">
+                    <h2 class="h4 mb-4">Protecting You from Phishing Attacks</h2>
+                    
+                    <p class="mb-4">PhishGuard is an AI-powered phishing detection tool designed to help users identify and avoid potentially dangerous websites and phishing attempts. Our project leverages advanced machine learning techniques to analyze URLs and determine their legitimacy.</p>
+                    
+                    <p class="mb-4">Phishing attacks remain one of the most common and effective cybersecurity threats, with millions of attempts occurring daily. These attacks often mimic legitimate websites to trick users into revealing sensitive information such as passwords, credit card details, or personal data.</p>
+                    
+                    <h3 class="h5 mb-3 mt-4">Our Mission</h3>
+                    <p>Our mission is to make the internet safer by providing accessible tools that help users identify and avoid phishing attempts. We believe that education and awareness, combined with technological solutions, are key to reducing the success rate of phishing attacks.</p>
+                    
+                    <h3 class="h5 mb-3 mt-4">Features</h3>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item bg-light">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>AI-Powered Analysis:</strong> Using advanced machine learning models trained on thousands of legitimate and phishing URLs.
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Comprehensive Detection:</strong> Analyzing multiple features including URL structure, domain age, SSL certificates, and suspicious patterns.
+                        </li>
+                        <li class="list-group-item bg-light">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Real-Time Protection:</strong> Get instant results before visiting potentially dangerous websites.
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Batch Processing:</strong> Check multiple URLs at once to efficiently scan links from emails or messages.
+                        </li>
+                        <li class="list-group-item bg-light">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Detailed Reports:</strong> See why a URL was flagged with detailed feature breakdown and risk assessment.
+                        </li>
+                    </ul>
+                    
+                    <h3 class="h5 mb-3 mt-4">The Team</h3>
+                    <p>PhishGuard was developed as a final year project by cybersecurity students dedicated to creating practical solutions for real-world security challenges. Our team combines expertise in machine learning, web security, and user experience design.</p>
+                    
+                    <h3 class="h5 mb-3 mt-4">Contact</h3>
+                    <p>If you have any questions, suggestions, or would like to report a potential issue, please feel free to contact us at:</p>
+                    <ul>
+                        <li>Email: support@phishguard.example.com</li>
+                        <li>GitHub: github.com/phishguard</li>
+                    </ul>
+                    
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Disclaimer:</strong> While PhishGuard uses advanced techniques to detect phishing attempts, no solution is 100% accurate. Always exercise caution when visiting websites, especially when providing sensitive information.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

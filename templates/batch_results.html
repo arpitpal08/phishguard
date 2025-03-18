@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Batch URL Analysis Results{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1">
+            <h1 class="display-5 fw-bold text-primary mb-4">Batch Analysis Results</h1>
+            
+            <div class="d-flex justify-content-between mb-4">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </a>
+                <button class="btn btn-outline-secondary" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>Print Results
+                </button>
+            </div>
+            
+            <div class="card shadow-lg border-0 mb-5">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0 fs-5"><i class="fas fa-list-ul me-2"></i>Results ({{ results|length }} URLs)</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>URL</th>
+                                    <th>Status</th>
+                                    <th>Probability</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td class="text-truncate" style="max-width: 250px;">
+                                        <a href="#" class="text-decoration-none">{{ result.url }}</a>
+                                    </td>
+                                    <td>
+                                        {% if result.is_phishing %}
+                                            <span class="badge bg-danger">Phishing</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Safe</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 6px; width: 100px;">
+                                            <div class="progress-bar {% if result.is_phishing %}bg-danger{% else %}bg-success{% endif %}" 
+                                                 role="progressbar" style="width: {{ (result.probability * 100)|round(1) }}%"></div>
+                                        </div>
+                                        <small>{{ (result.probability * 100)|round(1) }}%</small>
+                                    </td>
+                                    <td>{{ result.message }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow border-0 mb-4">
+                <div class="card-body p-4">
+                    <h4 class="mb-3">Summary</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="p-3 rounded-circle bg-danger bg-opacity-10 me-3">
+                                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0">{{ results|selectattr('is_phishing', 'eq', true)|list|length }}</h5>
+                                    <p class="text-muted mb-0">Phishing URLs</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="p-3 rounded-circle bg-success bg-opacity-10 me-3">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0">{{ results|selectattr('is_phishing', 'eq', false)|list|length }}</h5>
+                                    <p class="text-muted mb-0">Safe URLs</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

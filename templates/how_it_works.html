@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}How PhishGuard Works{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <h1 class="display-5 fw-bold text-primary mb-4">How PhishGuard Works</h1>
+            
+            <div class="card shadow-lg border-0 mb-5">
+                <div class="card-body p-4">
+                    <h2 class="h4 mb-4">The Science Behind Our AI-Powered Phishing Detection</h2>
+                    
+                    <p class="mb-4">PhishGuard uses a sophisticated machine learning model trained on thousands of legitimate and phishing URLs to accurately identify potentially dangerous websites. Our approach combines various techniques to provide comprehensive protection against phishing attempts.</p>
+                    
+                    <div class="bg-light p-4 rounded mb-4">
+                        <h3 class="h5 text-primary mb-3">Key Detection Features</h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-link"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="h6 fw-bold">URL Structure Analysis</h4>
+                                        <p class="small text-muted">Examining the components of a URL, including domain, path, and query parameters.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-fingerprint"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="h6 fw-bold">Suspicious Pattern Detection</h4>
+                                        <p class="small text-muted">Identifying patterns and keywords commonly used in phishing URLs.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="h6 fw-bold">SSL Certificate Verification</h4>
+                                        <p class="small text-muted">Checking for HTTPS and analyzing the security of the connection.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-history"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="h6 fw-bold">Domain Age Assessment</h4>
+                                        <p class="small text-muted">Analyzing how long a domain has been registered, as phishing sites are often new.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="h6 fw-bold">URL Shortener Detection</h4>
+                                        <p class="small text-muted">Identifying when URL shortening services are used to hide malicious destinations.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-code"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="h6 fw-bold">IP Address Usage</h4>
+                                        <p class="small text-muted">Detecting when numeric IP addresses are used instead of domain names.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="h5 mb-3 mt-4">Our Detection Process</h3>
+                    
+                    <div class="process-steps">
+                        <div class="process-step d-flex mb-4">
+                            <div class="process-step-number me-3">
+                                <span class="badge rounded-circle bg-primary p-2" style="width: 30px; height: 30px;">1</span>
+                            </div>
+                            <div class="process-step-content">
+                                <h4 class="h6 fw-bold">Feature Extraction</h4>
+                                <p>When a URL is submitted, PhishGuard extracts multiple features from it, including length, domain structure, special characters, and more.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="process-step d-flex mb-4">
+                            <div class="process-step-number me-3">
+                                <span class="badge rounded-circle bg-primary p-2" style="width: 30px; height: 30px;">2</span>
+                            </div>
+                            <div class="process-step-content">
+                                <h4 class="h6 fw-bold">Preliminary Filtering</h4>
+                                <p>Obvious phishing indicators are detected through pattern matching to quickly identify high-risk URLs.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="process-step d-flex mb-4">
+                            <div class="process-step-number me-3">
+                                <span class="badge rounded-circle bg-primary p-2" style="width: 30px; height: 30px;">3</span>
+                            </div>
+                            <div class="process-step-content">
+                                <h4 class="h6 fw-bold">Machine Learning Analysis</h4>
+                                <p>Our Random Forest classifier, trained on thousands of URLs, analyzes the features to determine a phishing probability score.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="process-step d-flex mb-4">
+                            <div class="process-step-number me-3">
+                                <span class="badge rounded-circle bg-primary p-2" style="width: 30px; height: 30px;">4</span>
+                            </div>
+                            <div class="process-step-content">
+                                <h4 class="h6 fw-bold">Risk Assessment</h4>
+                                <p>A comprehensive risk assessment is generated, including the probability of the URL being a phishing attempt and detailed feature analysis.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="process-step d-flex">
+                            <div class="process-step-number me-3">
+                                <span class="badge rounded-circle bg-primary p-2" style="width: 30px; height: 30px;">5</span>
+                            </div>
+                            <div class="process-step-content">
+                                <h4 class="h6 fw-bold">Results and Recommendations</h4>
+                                <p>Clear warnings and safety recommendations are provided to help you make informed decisions about visiting the site.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="h5 mb-3 mt-4">Model Training and Accuracy</h3>
+                    <p>Our model is trained using supervised learning on a dataset containing both legitimate and phishing URLs. We continually improve our model by:</p>
+                    <ul>
+                        <li>Regularly updating our training data with new phishing examples</li>
+                        <li>Fine-tuning model parameters to maximize accuracy</li>
+                        <li>Implementing feature engineering to capture new phishing techniques</li>
+                        <li>Conducting regular performance evaluations against new phishing sites</li>
+                    </ul>
+                    
+                    <div class="alert alert-primary mt-4">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Pro Tip:</strong> For the highest level of protection, combine PhishGuard with other security practices like using password managers, enabling two-factor authentication, and keeping your software updated.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
